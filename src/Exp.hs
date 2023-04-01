@@ -7,39 +7,30 @@ module Exp where
 import BoolForm
 import Data.Data
 import Data.Finite
+import Data.Foldable as F
 import Data.Maybe
 import Data.Set as S
+import Data.Singletons.Decide
+  ( Decision (Disproved, Proved),
+    (%~),
+  )
 import Data.Vector.Sized as V
--- import GHC.TypeLits.Singletons
+import GHC.TypeLits.Singletons
 import GHC.TypeNats
 import Unsafe.Coerce
 
-class NatSingleton (p :: Nat -> *) where
-  natSingleton :: KnownNat n => p n
+-- from https://stackoverflow.com/questions/46634706/haskell-singletons-typelits-package
 
--- | A natural number is either 0 or 1 plus something.
-data NatIsZero (n :: Nat) where
-  IsZero :: NatIsZero 0
-  IsNonZero :: KnownNat n => NatIsZero (1 + n)
+data IsZero (n :: Nat) where
+  Zero :: (0 ~ n) => IsZero n
+  NonZero :: (m ~ (n + 1)) => IsZero m
 
-instance NatSingleton NatIsZero where
-  natSingleton :: forall n. KnownNat n => NatIsZero n
-  natSingleton = case natVal (Proxy :: Proxy n) of
-    0 -> (unsafeCoerce :: NatIsZero 0 -> NatIsZero n) IsZero
-    n -> case someNatVal (n - 1) of
-      (SomeNat (p :: Proxy m)) -> (unsafeCoerce :: NatIsZero (1 + m) -> NatIsZero n) $ IsNonZero
+deriving instance Show (IsZero n)
 
-data NatPeano (n :: Nat) where
-  PeanoZero :: NatPeano 0
-  PeanoSucc :: KnownNat n => NatPeano n -> NatPeano (1 + n)
-
-deriving instance Show (NatPeano n)
-
-instance NatSingleton NatPeano where
-  natSingleton :: forall n. KnownNat n => NatPeano n
-  natSingleton = case natSingleton :: NatIsZero n of
-    IsZero -> PeanoZero
-    IsNonZero -> PeanoSucc natSingleton
+isZero :: forall n. Sing n -> IsZero n
+isZero n = case n %~ (SNat @0) of
+  Proved Refl -> Zero
+  Disproved _ -> unsafeCoerce NonZero
 
 data Exp a where
   Symbol :: a -> Exp a
@@ -48,7 +39,7 @@ data Exp a where
   Sum :: (Exp a) -> (Exp a) -> Exp a
   Concat :: (Exp a) -> (Exp a) -> Exp a
   Star :: (Exp a) -> Exp a
-  ConsTilde :: KnownNat n => (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
+  ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
 
 setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
 setConc fs f = S.map (`Concat` f) fs
@@ -62,17 +53,23 @@ reduceBot = reduceBy Bot
 reduceTop :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
 reduceTop = reduceBy Top
 
-nullAux :: KnownNat n => BoolForm (Finite n) -> Vector n (Exp a) -> Proxy n -> Bool
-nullAux phi fs (p :: Proxy n) =
-  case (natSingleton :: NatPeano n) of
-    PeanoZero ->
+plusComm :: Proxy n -> Proxy m -> n + m :~: m + n
+plusComm _ _ = unsafeCoerce Refl
+
+eqVect :: Vector (n + 1) a -> Vector (1 + n) a
+eqVect (v :: Vector (n + 1) a) = case plusComm (Proxy @1) (Proxy @n) of Refl -> v
+
+nullAux :: KnownNat n => BoolForm (Finite n) -> Vector n (Exp a) -> Bool
+nullAux (phi :: BoolForm (Finite n)) fs =
+  case isZero (SNat @n) of
+    Zero ->
       ( case reduce phi of
           Top -> True
           _ -> False
       )
-    PeanoSucc k ->
-      nullable (V.head fs) && nullable (ConsTilde (reduceBot phi) (V.tail fs))
-        || nullable (ConsTilde (reduceTop phi) (V.tail fs))
+    NonZero ->
+      nullable (V.head $ eqVect fs) && nullable (ConsTilde (reduceBot phi) (V.tail $ eqVect fs))
+        || nullable (ConsTilde (reduceTop phi) (V.tail $ eqVect fs))
 
 nullable :: Exp a -> Bool
 nullable Epsilon = True
@@ -81,14 +78,23 @@ nullable (Symbol _) = False
 nullable (Sum f1 f2) = nullable f1 || nullable f2
 nullable (Concat f1 f2) = nullable f1 && nullable f2
 nullable (Star _) = True
-nullable (ConsTilde phi fs) =
-  if V.length fs == 0
-    then case reduce phi of
-      Top -> True
-      _ -> False
-    else
-      nullable (V.head fs) && nullable (ConsTilde (reduceBot phi) (V.tail fs))
-        || nullable (ConsTilde (reduceTop phi) (V.tail fs))
+nullable (ConsTilde (phi :: BoolForm (Finite n)) fs) = knownLength fs $ nullAux phi fs
+
+derivAux :: (Ord (Exp a), Eq a, KnownNat n) => a -> BoolForm (Finite n) -> Vector n (Exp a) -> Set (Exp a)
+derivAux a (phi :: BoolForm (Finite n)) fs =
+  case isZero (SNat @n) of
+    Zero -> S.empty
+    NonZero ->
+      let f1 = V.head (eqVect fs)
+       in if nullable f1
+            then
+              let fs' = ConsTilde (reduceBot phi) (V.tail $ eqVect fs)
+               in derive a f1 `setConc` fs'
+                    `S.union` derive a fs'
+                    `S.union` derive a (ConsTilde (reduceTop phi) (V.tail $ eqVect fs))
+            else
+              derive a f1 `setConc` ConsTilde (reduceBot phi) (V.tail $ eqVect fs)
+                `S.union` derive a (ConsTilde (reduceTop phi) (V.tail $ eqVect fs))
 
 derive :: (Ord (Exp a), Eq a) => a -> Exp a -> Set (Exp a)
 derive _ Epsilon = S.empty
@@ -101,4 +107,7 @@ derive a (Concat f1 f2)
   | nullable f1 = (derive a f1 `setConc` f2) `S.union` derive a f2
   | otherwise = derive a f1 `setConc` f2
 derive a f'@(Star f) = derive a f `setConc` f'
-derive a (ConsTilde phi fs) = error "to do"
+derive a (ConsTilde phi fs) = knownLength fs $ derivAux a phi fs
+
+deriveWord :: (Ord (Exp a), Eq a) => [a] -> Exp a -> Set (Exp a)
+deriveWord w e = F.foldl' (\acc a -> S.foldl' (\acc2 e' -> derive a e' `S.union` acc2) S.empty acc) (S.singleton e) w

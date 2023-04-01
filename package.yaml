@@ -24,6 +24,10 @@ dependencies:
 - finite-typelits
 - vector-sized
 - containers
+- singletons
+- singletons-base
+- constraints
+- type-natural
 
 ghc-options:
 - -Wall
