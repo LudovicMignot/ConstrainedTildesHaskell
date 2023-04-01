@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Exp where
 
@@ -8,7 +10,36 @@ import Data.Finite
 import Data.Maybe
 import Data.Set as S
 import Data.Vector.Sized as V
+-- import GHC.TypeLits.Singletons
 import GHC.TypeNats
+import Unsafe.Coerce
+
+class NatSingleton (p :: Nat -> *) where
+  natSingleton :: KnownNat n => p n
+
+-- | A natural number is either 0 or 1 plus something.
+data NatIsZero (n :: Nat) where
+  IsZero :: NatIsZero 0
+  IsNonZero :: KnownNat n => NatIsZero (1 + n)
+
+instance NatSingleton NatIsZero where
+  natSingleton :: forall n. KnownNat n => NatIsZero n
+  natSingleton = case natVal (Proxy :: Proxy n) of
+    0 -> (unsafeCoerce :: NatIsZero 0 -> NatIsZero n) IsZero
+    n -> case someNatVal (n - 1) of
+      (SomeNat (p :: Proxy m)) -> (unsafeCoerce :: NatIsZero (1 + m) -> NatIsZero n) $ IsNonZero
+
+data NatPeano (n :: Nat) where
+  PeanoZero :: NatPeano 0
+  PeanoSucc :: KnownNat n => NatPeano n -> NatPeano (1 + n)
+
+deriving instance Show (NatPeano n)
+
+instance NatSingleton NatPeano where
+  natSingleton :: forall n. KnownNat n => NatPeano n
+  natSingleton = case natSingleton :: NatIsZero n of
+    IsZero -> PeanoZero
+    IsNonZero -> PeanoSucc natSingleton
 
 data Exp a where
   Symbol :: a -> Exp a
@@ -30,6 +61,18 @@ reduceBot = reduceBy Bot
 
 reduceTop :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
 reduceTop = reduceBy Top
+
+nullAux :: KnownNat n => BoolForm (Finite n) -> Vector n (Exp a) -> Proxy n -> Bool
+nullAux phi fs (p :: Proxy n) =
+  case (natSingleton :: NatPeano n) of
+    PeanoZero ->
+      ( case reduce phi of
+          Top -> True
+          _ -> False
+      )
+    PeanoSucc k ->
+      nullable (V.head fs) && nullable (ConsTilde (reduceBot phi) (V.tail fs))
+        || nullable (ConsTilde (reduceTop phi) (V.tail fs))
 
 nullable :: Exp a -> Bool
 nullable Epsilon = True
