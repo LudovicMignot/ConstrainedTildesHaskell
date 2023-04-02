@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+
 module BoolForm where
 
 data BoolForm a
@@ -9,6 +10,35 @@ data BoolForm a
   | Or (BoolForm a) (BoolForm a)
   | Not (BoolForm a)
   deriving (Functor)
+
+isSingle :: BoolForm a -> Bool
+isSingle Bot = True
+isSingle Top = True
+isSingle (Atom _) = True
+isSingle _ = False
+
+paren :: [Char] -> [Char]
+paren s = "(" ++ s ++ ")"
+
+instance Show a => Show (BoolForm a) where
+  show Top = "⊤"
+  show Bot = "⊥"
+  show (Atom a) = show a
+  show (Not f@(Not _)) = "¬" ++ show f
+  show (Not f)
+    | isSingle f = "¬" ++ show f
+    | otherwise = "¬" ++ paren (show f)
+  show (Or f1 f2@(Or _ _)) = show f1 ++ "∨" ++ paren (show f2)
+  show (Or f1 f2) = show f1 ++ "∨" ++ show f2
+  show (And f1 f2) = sf1 ++ "∧" ++ sf2
+    where
+      sf1 = case f1 of
+        Or _ _ -> paren $ show f1
+        _ -> show f1
+      sf2 = case f2 of
+        Or _ _ -> paren $ show f2
+        And _ _ -> paren $ show f2
+        _ -> show f2
 
 subst :: Eq a => BoolForm a -> a -> BoolForm a -> BoolForm a
 subst _ _ Bot = Bot

@@ -1,6 +1,10 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Exp where
 
@@ -24,8 +28,6 @@ import Unsafe.Coerce
 data IsZero (n :: Nat) where
   Zero :: (0 ~ n) => IsZero n
   NonZero :: (m ~ (n + 1)) => IsZero m
-
-deriving instance Show (IsZero n)
 
 isZero :: forall n. Sing n -> IsZero n
 isZero n = case n %~ (SNat @0) of
@@ -78,7 +80,7 @@ nullable (Symbol _) = False
 nullable (Sum f1 f2) = nullable f1 || nullable f2
 nullable (Concat f1 f2) = nullable f1 && nullable f2
 nullable (Star _) = True
-nullable (ConsTilde (phi :: BoolForm (Finite n)) fs) = knownLength fs $ nullAux phi fs
+nullable (ConsTilde phi fs) = knownLength fs $ nullAux phi fs
 
 derivAux :: (Ord (Exp a), Eq a, KnownNat n) => a -> BoolForm (Finite n) -> Vector n (Exp a) -> Set (Exp a)
 derivAux a (phi :: BoolForm (Finite n)) fs =
@@ -109,5 +111,27 @@ derive a (Concat f1 f2)
 derive a f'@(Star f) = derive a f `setConc` f'
 derive a (ConsTilde phi fs) = knownLength fs $ derivAux a phi fs
 
+deriveSet :: (Ord (Exp a), Eq a) => a -> Set (Exp a) -> Set (Exp a)
+deriveSet a = S.foldl' (\acc e -> derive a e `S.union` acc) S.empty
+
 deriveWord :: (Ord (Exp a), Eq a) => [a] -> Exp a -> Set (Exp a)
-deriveWord w e = F.foldl' (\acc a -> S.foldl' (\acc2 e' -> derive a e' `S.union` acc2) S.empty acc) (S.singleton e) w
+deriveWord w e = F.foldl' (flip deriveSet) (S.singleton e) w
+
+deriveBySymbs :: (Ord (Exp a), Eq a) => Set a -> Exp a -> Set (Exp a)
+deriveBySymbs as e = F.foldl' (\acc a -> acc `S.union` derive a e) S.empty as
+
+deriveSetsBySymbs :: (Ord (Exp a), Eq a) => Set a -> Set (Exp a) -> Set (Exp a)
+deriveSetsBySymbs as = S.foldl' (\acc e -> deriveBySymbs as e `S.union` acc) S.empty
+
+allDeriveBySymbs :: (Ord (Exp a), Eq a) => Set a -> Exp a -> Set (Exp a)
+allDeriveBySymbs as e =
+  aux S.empty $ S.singleton e
+  where
+    aux done todo =
+      if S.null todo
+        then done
+        else aux done' todo'
+      where
+        new = deriveSetsBySymbs as todo
+        done' = S.union done todo
+        todo' = S.difference new done'
