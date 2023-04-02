@@ -8,17 +8,18 @@
 
 module Exp where
 
-import BoolForm
+import BoolForm hiding (isSingle, paren)
 import Data.Data
 import Data.Finite
 import Data.Foldable as F
+import Data.List (intercalate)
 import Data.Maybe
 import Data.Set as S
 import Data.Singletons.Decide
   ( Decision (Disproved, Proved),
     (%~),
   )
-import Data.Vector.Sized as V
+import Data.Vector.Sized as V hiding ((++))
 import GHC.TypeLits.Singletons
 import GHC.TypeNats
 import Unsafe.Coerce
@@ -42,6 +43,36 @@ data Exp a where
   Concat :: (Exp a) -> (Exp a) -> Exp a
   Star :: (Exp a) -> Exp a
   ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
+
+paren :: [Char] -> [Char]
+paren s = "(" ++ s ++ ")"
+
+isSingle :: Exp a -> Bool
+isSingle (Symbol _) = True
+isSingle Epsilon = True
+isSingle Empty = True
+isSingle _ = False
+
+instance Show a => Show (Exp a) where
+  show (Symbol a) = show a
+  show Epsilon = "ε"
+  show Empty = "∅"
+  show (Sum e1 e2@(Sum _ _)) = show e1 ++ paren (show e2)
+  show (Sum e1 e2) = show e1 ++ show e2
+  show (Concat e1 e2) = se1 ++ se2
+    where
+      se1 = case e1 of
+        Sum _ _ -> paren $ show e1
+        _ -> show e1
+      se2 = case e2 of
+        Sum _ _ -> paren $ show e2
+        Concat _ _ -> paren $ show e2
+        _ -> show e2
+  show (Star e@(Star _)) = show e ++ "*"
+  show (Star e)
+    | isSingle e = show e ++ "*"
+    | otherwise = paren (show e) ++ "*"
+  show (ConsTilde phi es) = show phi ++ "::[" ++ intercalate "," (fmap show (V.toList es)) ++ "]"
 
 setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
 setConc fs f = S.map (`Concat` f) fs
