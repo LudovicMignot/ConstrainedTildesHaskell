@@ -44,6 +44,7 @@ data Exp a where
   Star :: (Exp a) -> Exp a
   ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
 
+
 paren :: [Char] -> [Char]
 paren s = "(" ++ s ++ ")"
 

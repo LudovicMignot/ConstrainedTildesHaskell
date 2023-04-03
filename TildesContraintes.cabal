@@ -28,6 +28,7 @@ library
       BoolForm
       Exp
       Lib
+      Test
   other-modules:
       Paths_TildesContraintes
   hs-source-dirs:

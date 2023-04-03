@@ -9,7 +9,7 @@ data BoolForm a
   | And (BoolForm a) (BoolForm a)
   | Or (BoolForm a) (BoolForm a)
   | Not (BoolForm a)
-  deriving (Functor)
+  deriving (Functor, Eq, Ord)
 
 isSingle :: BoolForm a -> Bool
 isSingle Bot = True
