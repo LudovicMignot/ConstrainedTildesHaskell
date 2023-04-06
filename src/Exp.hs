@@ -49,8 +49,8 @@ instance Eq a => Eq (Exp a) where
   Symbol a == Symbol b = a == b
   Epsilon == Epsilon = True
   Empty == Empty = True
-  Sum f1 f2 == Sum f1' f2' = f1 == f2 && f1' == f2'
-  Concat f1 f2 == Concat f1' f2' = f1 == f2 && f1' == f2'
+  Sum f1 f2 == Sum f1' f2' = f1 == f1' && f2 == f2'
+  Concat f1 f2 == Concat f1' f2' = f1 == f1' && f2 == f2'
   Star f == Star f' = f == f'
   ConsTilde (phi :: BoolForm (Finite n)) es == ConsTilde (phi' :: BoolForm (Finite n')) es' =
     knownLength es $
@@ -94,8 +94,12 @@ instance Ord a => Ord (Exp a) where
   Sum _ _ <= ConsTilde _ _ = True
   Concat _ _ <= ConsTilde _ _ = True
   Star _ <= ConsTilde _ _ = True
-  ConsTilde (_ :: BoolForm (Finite n)) es <= ConsTilde (_ :: BoolForm (Finite n')) es' =
-    (knownLength es $ natVal $ Proxy @n, V.toList es) <= (knownLength es' $ natVal $ Proxy @n', V.toList es')
+  ConsTilde (phi :: BoolForm (Finite n)) es <= ConsTilde (phi' :: BoolForm (Finite n')) es' =
+    knownLength es $
+      knownLength es' $
+        case sameNat (Proxy @n) (Proxy @n') of
+          Just p -> (castWith (apply Refl (apply (Refl :: Finite :~: Finite) p)) phi, V.toList es) <= (phi', V.toList es')
+          Nothing -> natVal (Proxy @n) <= natVal (Proxy @n')
 
 paren :: [Char] -> [Char]
 paren s = "(" ++ s ++ ")"
@@ -125,7 +129,7 @@ instance Show a => Show (Exp a) where
   show (Star e)
     | isSingle e = show e ++ "*"
     | otherwise = paren (show e) ++ "*"
-  show (ConsTilde phi es) = show phi ++ "::[" ++ intercalate "," (fmap show (V.toList es)) ++ "]"
+  show (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ show phi ++ "|" ++ "-[" ++ intercalate "," (fmap show (V.toList es)) ++ "]"
 
 setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
 setConc fs f = S.map (`Concat` f) fs
