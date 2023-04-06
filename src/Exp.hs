@@ -19,6 +19,7 @@ import Data.Singletons.Decide
   ( Decision (Disproved, Proved),
     (%~),
   )
+import Data.Type.Equality
 import Data.Vector.Sized as V hiding ((++))
 import GHC.TypeLits.Singletons
 import GHC.TypeNats
@@ -44,6 +45,57 @@ data Exp a where
   Star :: (Exp a) -> Exp a
   ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
 
+instance Eq a => Eq (Exp a) where
+  Symbol a == Symbol b = a == b
+  Epsilon == Epsilon = True
+  Empty == Empty = True
+  Sum f1 f2 == Sum f1' f2' = f1 == f2 && f1' == f2'
+  Concat f1 f2 == Concat f1' f2' = f1 == f2 && f1' == f2'
+  Star f == Star f' = f == f'
+  ConsTilde (phi :: BoolForm (Finite n)) es == ConsTilde (phi' :: BoolForm (Finite n')) es' =
+    knownLength es $
+      knownLength es' $
+        case sameNat (Proxy @n) (Proxy @n') of
+          Just p -> castWith (apply Refl (apply (Refl :: Finite :~: Finite) p)) phi == phi' && V.toList es == V.toList es'
+          Nothing -> False
+  _ == _ = False
+
+instance Ord a => Ord (Exp a) where
+  Symbol a <= Symbol b = a <= b
+  _ <= Symbol _ = False
+  Symbol _ <= Epsilon = True
+  Epsilon <= Epsilon = True
+  _ <= Epsilon = False
+  Symbol _ <= Empty = True
+  Epsilon <= Empty = True
+  Empty <= Empty = True
+  _ <= Empty = False
+  Symbol _ <= Sum _ _ = True
+  Epsilon <= Sum _ _ = True
+  Empty <= Sum _ _ = True
+  Sum f1 f2 <= Sum f1' f2' = (f1, f2) <= (f1', f2')
+  _ <= Sum _ _ = False
+  Symbol _ <= Concat _ _ = True
+  Epsilon <= Concat _ _ = True
+  Empty <= Concat _ _ = True
+  Sum _ _ <= Concat _ _ = True
+  Concat f1 f2 <= Concat f1' f2' = (f1, f2) <= (f1', f2')
+  _ <= Concat _ _ = False
+  Symbol _ <= Star _ = True
+  Epsilon <= Star _ = True
+  Empty <= Star _ = True
+  Sum _ _ <= Star _ = True
+  Concat _ _ <= Star _ = True
+  Star f <= Star f' = f <= f'
+  _ <= Star _ = False
+  Symbol _ <= ConsTilde _ _ = True
+  Epsilon <= ConsTilde _ _ = True
+  Empty <= ConsTilde _ _ = True
+  Sum _ _ <= ConsTilde _ _ = True
+  Concat _ _ <= ConsTilde _ _ = True
+  Star _ <= ConsTilde _ _ = True
+  ConsTilde (_ :: BoolForm (Finite n)) es <= ConsTilde (_ :: BoolForm (Finite n')) es' =
+    (knownLength es $ natVal $ Proxy @n, V.toList es) <= (knownLength es' $ natVal $ Proxy @n', V.toList es')
 
 paren :: [Char] -> [Char]
 paren s = "(" ++ s ++ ")"
@@ -60,7 +112,7 @@ instance Show a => Show (Exp a) where
   show Empty = "∅"
   show (Sum e1 e2@(Sum _ _)) = show e1 ++ paren (show e2)
   show (Sum e1 e2) = show e1 ++ show e2
-  show (Concat e1 e2) = se1 ++ se2
+  show (Concat e1 e2) = se1 ++ "·" ++ se2
     where
       se1 = case e1 of
         Sum _ _ -> paren $ show e1
