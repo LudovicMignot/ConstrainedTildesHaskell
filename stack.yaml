@@ -39,7 +39,7 @@ packages:
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-# extra-deps: 
+# extra-deps:
 # - singleton-typelits-0.1.0.0
 # - git: https://github.com/mniip/singleton-typelits
 #   commit: 617598f09fa02e304b295795521e1a933e4a4eb9
