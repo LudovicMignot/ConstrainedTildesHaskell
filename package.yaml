@@ -28,6 +28,8 @@ dependencies:
 - singletons-base
 - constraints
 - type-natural
+- graphviz
+- text
 
 ghc-options:
 - -Wall

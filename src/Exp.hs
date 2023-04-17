@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -21,8 +22,11 @@ import Data.Singletons.Decide
   )
 import Data.Type.Equality
 import Data.Vector.Sized as V hiding ((++))
+import FAClass
 import GHC.TypeLits.Singletons
 import GHC.TypeNats
+import NFA
+import ToString
 import Unsafe.Coerce
 
 -- from https://stackoverflow.com/questions/46634706/haskell-singletons-typelits-package
@@ -44,6 +48,22 @@ data Exp a where
   Concat :: (Exp a) -> (Exp a) -> Exp a
   Star :: (Exp a) -> Exp a
   ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
+
+alphabet :: Ord a => Exp a -> Set a
+alphabet (Symbol a) = S.singleton a
+alphabet Epsilon = S.empty
+alphabet Empty = S.empty
+alphabet (Sum e1 e2) = Exp.alphabet e1 `S.union` Exp.alphabet e2
+alphabet (Concat e1 e2) = Exp.alphabet e1 `S.union` Exp.alphabet e2
+alphabet (Star e) = Exp.alphabet e
+alphabet (ConsTilde _ es) = V.foldl' (\acc e -> Exp.alphabet e `S.union` acc) S.empty es
+
+conc :: Exp a -> Exp a -> Exp a
+conc Epsilon e = e
+conc e Epsilon = e
+conc _ Empty = Empty
+conc Empty _ = Empty
+conc e f = Concat e f
 
 instance Eq a => Eq (Exp a) where
   Symbol a == Symbol b = a == b
@@ -131,8 +151,29 @@ instance Show a => Show (Exp a) where
     | otherwise = paren (show e) ++ "*"
   show (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ show phi ++ "|" ++ "-[" ++ intercalate "," (fmap show (V.toList es)) ++ "]"
 
+instance ToString a => ToString (Exp a) where
+  toString (Symbol a) = toString a
+  toString Epsilon = "ε"
+  toString Empty = "∅"
+  toString (Sum e1 e2@(Sum _ _)) = toString e1 ++ paren (toString e2)
+  toString (Sum e1 e2) = toString e1 ++ toString e2
+  toString (Concat e1 e2) = se1 ++ "·" ++ se2
+    where
+      se1 = case e1 of
+        Sum _ _ -> paren $ toString e1
+        _ -> toString e1
+      se2 = case e2 of
+        Sum _ _ -> paren $ toString e2
+        Concat _ _ -> paren $ toString e2
+        _ -> toString e2
+  toString (Star e@(Star _)) = toString e ++ "*"
+  toString (Star e)
+    | isSingle e = toString e ++ "*"
+    | otherwise = paren (toString e) ++ "*"
+  toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|" ++ "-[" ++ intercalate "," (fmap toString (V.toList es)) ++ "]"
+
 setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
-setConc fs f = S.map (`Concat` f) fs
+setConc fs f = S.map (`conc` f) fs
 
 reduceBy :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
 reduceBy f phi = reduce $ rename (fromMaybe (error "reduceBy: impossible") . unshift) $ subst f (finite 0) phi
@@ -223,3 +264,24 @@ allDeriveBySymbs as e =
         new = deriveSetsBySymbs as todo
         done' = S.union done todo
         todo' = S.difference new done'
+
+antimirov ::
+  (Ord symbol) => Exp symbol -> NFA (Exp symbol) symbol
+antimirov e
+  | nullable e = setFinal tmp e
+  | otherwise = tmp
+  where
+    tmp = setInitial (computeAccess newNFA $ S.singleton e) e
+    sigma = Exp.alphabet e
+    computeAccess accuAut toDo
+      | S.null toDo = accuAut
+      | otherwise = computeAccess newAut newToDo
+      where
+        (newAut, newToDo) = S.foldr myFunc (accuAut, S.empty) toDo
+    myFunc p (accuAut, accuToDo) = S.foldr myFunc2 (accuAut, accuToDo) symbAndDerivs
+      where
+        symbAndDerivs = S.foldr (\x accu -> accu `S.union` S.map (x,) (derive x p)) S.empty sigma
+        myFunc2 (x, e') (newAut, newToDo)
+          | e' `isStateIn` newAut = (makeTrans newAut (p, x, e'), newToDo)
+          | nullable e' = (makeTrans (addFinalState newAut e') (p, x, e'), S.insert e' newToDo)
+          | otherwise = (makeTrans newAut (p, x, e'), S.insert e' newToDo)

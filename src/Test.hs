@@ -4,9 +4,12 @@ module Test where
 
 import BoolForm
 import Data.Finite
+import Data.Maybe
 import Data.Set as S
 import Data.Vector.Sized as V
 import Exp
+import FAClass (FA (faToDot, faToPng))
+import NFA
 
 phi :: BoolForm (Finite 3)
 phi = And (Or (Atom (finite 2)) (Atom (finite 0))) (Not (Atom (finite 1)))
@@ -25,3 +28,21 @@ e'' = Concat Epsilon e'
 
 e3 :: Exp a
 e3 = Concat Epsilon $ ConsTilde Top V.empty
+
+plus :: a -> Exp a
+plus a = Symbol a `Concat` Star (Symbol a)
+
+phi' :: BoolForm (Finite 4)
+phi' = fromJust $ mirror [Atom 0, Atom 1, Atom 2, Atom 3]
+
+expr :: Exp Char
+expr = ConsTilde phi' $ fromTuple (plus 'a', plus 'b', plus 'c', plus 'd')
+
+auto :: NFA (Exp Char) Char
+auto = antimirov expr
+
+viz :: String
+viz = faToDot auto
+
+vizPng :: IO FilePath
+vizPng = faToPng "test" auto

@@ -4,6 +4,7 @@
 module BoolForm where
 
 import Data.Finite
+import ToString
 
 data BoolForm a
   = Atom a
@@ -42,6 +43,26 @@ instance Show a => Show (BoolForm a) where
         Or _ _ -> paren $ show f2
         And _ _ -> paren $ show f2
         _ -> show f2
+
+instance ToString a => ToString (BoolForm a) where
+  toString Top = "⊤"
+  toString Bot = "⊥"
+  toString (Atom a) = toString a
+  toString (Not f@(Not _)) = "¬" ++ toString f
+  toString (Not f)
+    | isSingle f = "¬" ++ toString f
+    | otherwise = "¬" ++ paren (toString f)
+  toString (Or f1 f2@(Or _ _)) = toString f1 ++ "∨" ++ paren (toString f2)
+  toString (Or f1 f2) = toString f1 ++ "∨" ++ toString f2
+  toString (And f1 f2) = sf1 ++ "∧" ++ sf2
+    where
+      sf1 = case f1 of
+        Or _ _ -> paren $ toString f1
+        _ -> toString f1
+      sf2 = case f2 of
+        Or _ _ -> paren $ toString f2
+        And _ _ -> paren $ toString f2
+        _ -> toString f2
 
 instance {-# OVERLAPPING #-} Show (BoolForm (Finite n)) where
   show Top = "⊤"
@@ -101,3 +122,13 @@ reduce (Not f) =
 
 rename :: (a -> b) -> BoolForm a -> BoolForm b
 rename = fmap
+
+equiv :: BoolForm a -> BoolForm a -> BoolForm a
+equiv f f' = And f f' `Or` And (Not f) (Not f')
+
+mirror :: [BoolForm a] -> Maybe (BoolForm a)
+mirror [] = Just Top
+mirror [_] = Nothing
+mirror (f : fs) =
+  let f' = last fs
+   in fmap (equiv f f' `And`) $ mirror $ init fs
