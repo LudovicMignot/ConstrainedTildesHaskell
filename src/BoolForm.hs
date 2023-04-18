@@ -1,9 +1,10 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module BoolForm where
 
 import Data.Finite
+import GHC.TypeNats
 import ToString
 
 data BoolForm a
@@ -13,7 +14,7 @@ data BoolForm a
   | And (BoolForm a) (BoolForm a)
   | Or (BoolForm a) (BoolForm a)
   | Not (BoolForm a)
-  deriving (Functor, Eq, Ord)
+  deriving (Functor, Foldable, Traversable, Eq, Ord)
 
 isSingle :: BoolForm a -> Bool
 isSingle Bot = True
@@ -122,6 +123,9 @@ reduce (Not f) =
 
 rename :: (a -> b) -> BoolForm a -> BoolForm b
 rename = fmap
+
+toFinite :: KnownNat n => BoolForm Integer -> Maybe (BoolForm (Finite n))
+toFinite = mapM packFinite
 
 equiv :: BoolForm a -> BoolForm a -> BoolForm a
 equiv f f' = And f f' `Or` And (Not f) (Not f')

@@ -49,6 +49,12 @@ data Exp a where
   Star :: (Exp a) -> Exp a
   ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
 
+consTilde :: BoolForm Integer -> [Exp a] -> Maybe (Exp a)
+consTilde f (es :: [Exp a]) = V.withSizedList es aux
+  where
+    aux :: forall n. KnownNat n => Vector n (Exp a) -> Maybe (Exp a)
+    aux v = knownLength v $ flip ConsTilde v <$> toFinite f
+
 alphabet :: Ord a => Exp a -> Set a
 alphabet (Symbol a) = S.singleton a
 alphabet Epsilon = S.empty

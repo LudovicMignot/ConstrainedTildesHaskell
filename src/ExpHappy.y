@@ -16,9 +16,7 @@ import Data.Maybe (listToMaybe)
 
 -- import LinComb.LinComb4
 -- import  Singletons.Singletons
--- import Control.Monad(join)
-
--- import Type.UnknownSizedVect as TU
+import Control.Monad(join)
 
 -- import           Data.Singletons                ( SingI )
 
@@ -31,8 +29,8 @@ import Data.Maybe (listToMaybe)
 %left somme
 %left conc
 %left star
-%left et
 %left ou
+%left et
 %left non
 
 %monad {Maybe}
@@ -68,11 +66,11 @@ Exp :: {Maybe (Exp Char)}
   | vide {Just E.Empty}
   | eps {Just E.Epsilon}
   | symb { fmap E.Symbol (listToMaybe $1)}
-  -- | vert Form vert ExpList {
-  --   liftA2 E.ConsTilde ($2) (sequence $4)
-  -- }
+  | vert Form vert ExpList {
+    join $ liftA2 E.consTilde $2 (sequence $4)
+  }
 
-Form :: {Maybe (BoolForm Int)}
+Form :: {Maybe (BoolForm Integer)}
   : Form et Form {liftA2 B.And $1 $3}
   | Form ou Form {liftA2 B.Or $1 $3}
   | non Form { fmap B.Not $2}
@@ -80,7 +78,7 @@ Form :: {Maybe (BoolForm Int)}
   | bot {Just B.Bot}
   | atom {Just $ Atom $1}
 
--- ICI changer vers vector
+
 ExpList :: {[Maybe (Exp Char)]}
   : po pf {[]}
   | po NonEmptyList pf {

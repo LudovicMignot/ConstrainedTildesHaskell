@@ -36,7 +36,7 @@ tokens :-
   | Somme
   | Conc
   | Symb String
-  | Number Int
+  | Number Integer
   | Vide
   | Epsilon
   | ParO
