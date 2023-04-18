@@ -1,5 +1,6 @@
 -- {-# LANGUAGE OverloadedStrings #-}
 -- {-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 module FAClass where
 

@@ -135,7 +135,7 @@ instance Show a => Show (Exp a) where
   show Epsilon = "ε"
   show Empty = "∅"
   show (Sum e1 e2@(Sum _ _)) = show e1 ++ paren (show e2)
-  show (Sum e1 e2) = show e1 ++ show e2
+  show (Sum e1 e2) = show e1 ++ "+" ++ show e2
   show (Concat e1 e2) = se1 ++ "·" ++ se2
     where
       se1 = case e1 of
@@ -156,7 +156,7 @@ instance ToString a => ToString (Exp a) where
   toString Epsilon = "ε"
   toString Empty = "∅"
   toString (Sum e1 e2@(Sum _ _)) = toString e1 ++ paren (toString e2)
-  toString (Sum e1 e2) = toString e1 ++ toString e2
+  toString (Sum e1 e2) = toString e1 ++ "+" ++ toString e2
   toString (Concat e1 e2) = se1 ++ "·" ++ se2
     where
       se1 = case e1 of
