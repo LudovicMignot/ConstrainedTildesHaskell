@@ -71,6 +71,10 @@ conc _ Empty = Empty
 conc Empty _ = Empty
 conc e f = Concat e f
 
+smartCons :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
+smartCons Bot _ = Empty
+smartCons f es = ConsTilde f es
+
 instance Eq a => Eq (Exp a) where
   Symbol a == Symbol b = a == b
   Epsilon == Epsilon = True
@@ -179,6 +183,7 @@ instance ToString a => ToString (Exp a) where
   toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|" ++ "-[" ++ intercalate "," (fmap toString (V.toList es)) ++ "]"
 
 setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
+setConc fs Empty = S.empty
 setConc fs f = S.map (`conc` f) fs
 
 reduceBy :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
@@ -225,13 +230,13 @@ derivAux a (phi :: BoolForm (Finite n)) fs =
       let f1 = V.head (eqVect fs)
        in if nullable f1
             then
-              let fs' = ConsTilde (reduceBot phi) (V.tail $ eqVect fs)
+              let fs' = smartCons (reduceBot phi) (V.tail $ eqVect fs)
                in derive a f1 `setConc` fs'
                     `S.union` derive a fs'
-                    `S.union` derive a (ConsTilde (reduceTop phi) (V.tail $ eqVect fs))
+                    `S.union` derive a (smartCons (reduceTop phi) (V.tail $ eqVect fs))
             else
-              derive a f1 `setConc` ConsTilde (reduceBot phi) (V.tail $ eqVect fs)
-                `S.union` derive a (ConsTilde (reduceTop phi) (V.tail $ eqVect fs))
+              derive a f1 `setConc` smartCons (reduceBot phi) (V.tail $ eqVect fs)
+                `S.union` derive a (smartCons (reduceTop phi) (V.tail $ eqVect fs))
 
 derive :: (Ord (Exp a), Eq a) => a -> Exp a -> Set (Exp a)
 derive _ Epsilon = S.empty

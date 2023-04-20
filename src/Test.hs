@@ -49,7 +49,7 @@ vizPng :: IO FilePath
 vizPng = faToPng "test" auto
 
 expr2 :: Exp Char
-expr2 = fromJust $ expFromString "|0&2 Or 1&3|(a.a*, b.b*, c.c*, d.d*)"
+expr2 = fromJust $ expFromString "|((0&3) Or (Not 0 & Not 3)) And ((1 & 2) Or (Not 1 & Not 2))|(a.(a*), b.(b*), a.(a*), b.(b*))"
 
 vizPng2 :: IO FilePath
 vizPng2 = faToPng "test2" $ antimirov expr2
