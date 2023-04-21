@@ -27,7 +27,7 @@ phi = And (Or (Atom (finite 2)) (Atom (finite 0))) (Not (Atom (finite 1)))
 e :: Exp Char
 e = ConsTilde phi $ fromTuple (Symbol 'a', Symbol 'b', Symbol 'c')
 ```
-- the set of derived terms of $ e $ is `res` computed as follows
+- the set of derived terms of $e$ is `res` computed as follows
 ```haskell
 res :: Set (Exp Char)
 res = allDeriveBySymbs (S.fromList "abc") e
