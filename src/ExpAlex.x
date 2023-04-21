@@ -9,11 +9,11 @@ tokens :-
   $white+ ;
   $digit+ {\s -> Number $ read s}
   "|" {\_ -> Vert}
-  "&" | "And" {\_ -> And}
-  "¬" | "Not" {\_ -> Non}
+  "&" | "And" | "∧" {\_ -> And}
+  "¬" | "Not" | "~" | "!" {\_ -> Non}
   "Bot" {\_ -> Bot}
   "Top" {\_ -> Top}
-  "Or" {\_ -> Or}
+  "Or" | "∨" {\_ -> Or}
   "*" {\_ -> Star}
   "+" {\_ -> Somme}
   "."|"·" {\_ -> Conc}

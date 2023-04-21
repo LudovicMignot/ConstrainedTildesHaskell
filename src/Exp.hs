@@ -180,10 +180,10 @@ instance ToString a => ToString (Exp a) where
   toString (Star e)
     | isSingle e = toString e ++ "*"
     | otherwise = paren (toString e) ++ "*"
-  toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|" ++ "-[" ++ intercalate "," (fmap toString (V.toList es)) ++ "]"
+  toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|[" ++ intercalate "," (fmap toString (V.toList es)) ++ "]"
 
 setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
-setConc fs Empty = S.empty
+setConc _ Empty = S.empty
 setConc fs f = S.map (`conc` f) fs
 
 reduceBy :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite (n + 1)) -> BoolForm (Finite n)

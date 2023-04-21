@@ -16,6 +16,13 @@ data BoolForm a
   | Not (BoolForm a)
   deriving (Functor, Foldable, Traversable, Eq, Ord)
 
+smartAnd :: BoolForm a -> BoolForm a -> BoolForm a
+smartAnd Top f = f
+smartAnd f Top = f
+smartAnd Bot _ = Bot
+smartAnd _ Bot = Bot
+smartAnd f g = And f g
+
 isSingle :: BoolForm a -> Bool
 isSingle Bot = True
 isSingle Top = True
@@ -135,4 +142,4 @@ mirror [] = Just Top
 mirror [_] = Nothing
 mirror (f : fs) =
   let f' = last fs
-   in fmap (equiv f f' `And`) $ mirror $ init fs
+   in fmap (equiv f f' `smartAnd`) $ mirror $ init fs

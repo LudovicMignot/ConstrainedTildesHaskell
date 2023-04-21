@@ -72,6 +72,7 @@ Exp :: {Maybe (Exp Char)}
 
 Form :: {Maybe (BoolForm Integer)}
   : Form et Form {liftA2 B.And $1 $3}
+  | Form star Form {liftA2 B.And $1 $3}
   | Form ou Form {liftA2 B.Or $1 $3}
   | po Form pf {$2}
   | non Form { fmap B.Not $2}
