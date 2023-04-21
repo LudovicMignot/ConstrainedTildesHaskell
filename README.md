@@ -17,12 +17,12 @@ First, run the `stack ghci Test.hs` command in the `src` folder.
 This may take some time during the first launch: Haskell packages have to be downloaded and built.
 
 Once the REPL launched, few examples are defined:
-- the value `phi` is the Boolean formula $ \phi = (2 \vee 0) \wedge \neg 1 $ over the ternary alphabet $ \{1, 2, 3\}$, defined by
+- the value `phi` is the Boolean formula $\phi = (2 \vee 0) \wedge \neg 1$ over the ternary alphabet $\{1, 2, 3\}$, defined by
 ```haskell
 phi :: BoolForm (Finite 3)
 phi = And (Or (Atom (finite 2)) (Atom (finite 0))) (Not (Atom (finite 1)))
 ```
-- the expression `e` is the constrained tilde $ \phi(a, b, c) $ defined by
+- the expression `e` is the constrained tilde $\phi(a, b, c)$ defined by
 ```haskell
 e :: Exp Char
 e = ConsTilde phi $ fromTuple (Symbol 'a', Symbol 'b', Symbol 'c')
@@ -42,7 +42,7 @@ phi' = fromJust $ mirror [Atom 0, Atom 1, Atom 2, Atom 3]
 plus :: a -> Exp a
 plus a = Symbol a `Concat` Star (Symbol a)
 ```
-- the expression $ \mathrm{Mirror}(a^+, b^+, c^+, d^+) $ can be defined by
+- the expression $\mathrm{Mirror}(a^+, b^+, c^+, d^+)$ can be defined by
 ```haskell
 expr :: Exp Char
 expr = ConsTilde phi' $ fromTuple (plus 'a', plus 'b', plus 'c', plus 'd')
