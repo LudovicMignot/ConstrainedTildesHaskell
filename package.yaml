@@ -6,9 +6,6 @@ author:              "Author name here"
 maintainer:          "example@example.com"
 copyright:           "2023 Author name here"
 
-extra-source-files:
-- README.md
-- CHANGELOG.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -22,6 +19,12 @@ description:         Please see the README on GitHub at <https://github.com/gith
 build-tools :
   - alex
   - happy
+  
+extra-source-files:
+- README.md
+- CHANGELOG.md
+- src/ExpAlex.x
+- src/ExpHappy.y
   
 dependencies:
 - array

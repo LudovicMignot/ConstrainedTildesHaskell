@@ -9,8 +9,7 @@ import Data.Set as S
 import Data.Vector.Sized as V
 import Exp
 import ExpFromString
-import FAClass (FA (faToDot, faToPng))
-import NFA
+import NFA ( NFA, faToDot, faToPng )
 
 phi :: BoolForm (Finite 3)
 phi = And (Or (Atom (finite 2)) (Atom (finite 0))) (Not (Atom (finite 1)))

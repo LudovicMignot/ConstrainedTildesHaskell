@@ -22,10 +22,9 @@ import Data.Singletons.Decide
   )
 import Data.Type.Equality
 import Data.Vector.Sized as V hiding ((++))
-import FAClass
 import GHC.TypeLits.Singletons
 import GHC.TypeNats
-import NFA
+import NFA ( newNFA, NFA, setFinal, setInitial, isStateIn, addFinalState, makeTrans )
 import ToString
 import Unsafe.Coerce
 
@@ -71,7 +70,7 @@ conc _ Empty = Empty
 conc Empty _ = Empty
 conc e f = Concat e f
 
-smartCons :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
+smartCons :: BoolForm (Finite n) -> Vector n (Exp a) -> Exp a
 smartCons Bot _ = Empty
 smartCons f es = ConsTilde f es
 
