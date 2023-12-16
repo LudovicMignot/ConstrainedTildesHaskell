@@ -16,15 +16,13 @@ import Data.Foldable as F
 import Data.List (intercalate)
 import Data.Maybe
 import Data.Set as S
+import Data.Singletons
 import Data.Singletons.Decide
-  ( Decision (Disproved, Proved),
-    (%~),
-  )
+import Data.Singletons.TypeLits
 import Data.Type.Equality
 import Data.Vector.Sized as V hiding ((++))
-import GHC.TypeLits.Singletons
-import GHC.TypeNats
-import NFA ( newNFA, NFA, setFinal, setInitial, isStateIn, addFinalState, makeTrans )
+import GHC.TypeLits hiding (natVal)
+import NFA (NFA, addFinalState, isStateIn, makeTrans, newNFA, setFinal, setInitial)
 import ToString
 import Unsafe.Coerce
 
@@ -43,18 +41,18 @@ data Exp a where
   Symbol :: a -> Exp a
   Epsilon :: Exp a
   Empty :: Exp a
-  Sum :: (Exp a) -> (Exp a) -> Exp a
-  Concat :: (Exp a) -> (Exp a) -> Exp a
-  Star :: (Exp a) -> Exp a
-  ConsTilde :: (BoolForm (Finite n)) -> (Vector n (Exp a)) -> Exp a
+  Sum :: Exp a -> Exp a -> Exp a
+  Concat :: Exp a -> Exp a -> Exp a
+  Star :: Exp a -> Exp a
+  ConsTilde :: BoolForm (Finite n) -> Vector n (Exp a) -> Exp a
 
 consTilde :: BoolForm Integer -> [Exp a] -> Maybe (Exp a)
 consTilde f (es :: [Exp a]) = V.withSizedList es aux
   where
-    aux :: forall n. KnownNat n => Vector n (Exp a) -> Maybe (Exp a)
+    aux :: forall n. (KnownNat n) => Vector n (Exp a) -> Maybe (Exp a)
     aux v = knownLength v $ flip ConsTilde v <$> toFinite f
 
-alphabet :: Ord a => Exp a -> Set a
+alphabet :: (Ord a) => Exp a -> Set a
 alphabet (Symbol a) = S.singleton a
 alphabet Epsilon = S.empty
 alphabet Empty = S.empty
@@ -74,7 +72,7 @@ smartCons :: BoolForm (Finite n) -> Vector n (Exp a) -> Exp a
 smartCons Bot _ = Empty
 smartCons f es = ConsTilde f es
 
-instance Eq a => Eq (Exp a) where
+instance (Eq a) => Eq (Exp a) where
   Symbol a == Symbol b = a == b
   Epsilon == Epsilon = True
   Empty == Empty = True
@@ -89,7 +87,7 @@ instance Eq a => Eq (Exp a) where
           Nothing -> False
   _ == _ = False
 
-instance Ord a => Ord (Exp a) where
+instance (Ord a) => Ord (Exp a) where
   Symbol a <= Symbol b = a <= b
   _ <= Symbol _ = False
   Symbol _ <= Epsilon = True
@@ -139,7 +137,7 @@ isSingle Epsilon = True
 isSingle Empty = True
 isSingle _ = False
 
-instance Show a => Show (Exp a) where
+instance (Show a) => Show (Exp a) where
   show (Symbol a) = show a
   show Epsilon = "ε"
   show Empty = "∅"
@@ -160,7 +158,7 @@ instance Show a => Show (Exp a) where
     | otherwise = paren (show e) ++ "*"
   show (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ show phi ++ "|" ++ "-[" ++ intercalate "," (fmap show (V.toList es)) ++ "]"
 
-instance ToString a => ToString (Exp a) where
+instance (ToString a) => ToString (Exp a) where
   toString (Symbol a) = toString a
   toString Epsilon = "ε"
   toString Empty = "∅"
@@ -181,17 +179,17 @@ instance ToString a => ToString (Exp a) where
     | otherwise = paren (toString e) ++ "*"
   toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|[" ++ intercalate "," (fmap toString (V.toList es)) ++ "]"
 
-setConc :: Ord (Exp a) => Set (Exp a) -> Exp a -> Set (Exp a)
+setConc :: (Ord (Exp a)) => Set (Exp a) -> Exp a -> Set (Exp a)
 setConc _ Empty = S.empty
 setConc fs f = S.map (`conc` f) fs
 
-reduceBy :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
+reduceBy :: (KnownNat (n + 1)) => BoolForm (Finite (n + 1)) -> BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
 reduceBy f phi = reduce $ rename (fromMaybe (error "reduceBy: impossible") . unshift) $ subst f (finite 0) phi
 
-reduceBot :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
+reduceBot :: (KnownNat (n + 1)) => BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
 reduceBot = reduceBy Bot
 
-reduceTop :: KnownNat (n + 1) => BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
+reduceTop :: (KnownNat (n + 1)) => BoolForm (Finite (n + 1)) -> BoolForm (Finite n)
 reduceTop = reduceBy Top
 
 plusComm :: Proxy n -> Proxy m -> n + m :~: m + n
@@ -200,7 +198,7 @@ plusComm _ _ = unsafeCoerce Refl
 eqVect :: Vector (n + 1) a -> Vector (1 + n) a
 eqVect (v :: Vector (n + 1) a) = case plusComm (Proxy @1) (Proxy @n) of Refl -> v
 
-nullAux :: KnownNat n => BoolForm (Finite n) -> Vector n (Exp a) -> Bool
+nullAux :: (KnownNat n) => BoolForm (Finite n) -> Vector n (Exp a) -> Bool
 nullAux (phi :: BoolForm (Finite n)) fs =
   case isZero (SNat @n) of
     Zero ->
@@ -230,11 +228,13 @@ derivAux a (phi :: BoolForm (Finite n)) fs =
        in if nullable f1
             then
               let fs' = smartCons (reduceBot phi) (V.tail $ eqVect fs)
-               in derive a f1 `setConc` fs'
+               in derive a f1
+                    `setConc` fs'
                     `S.union` derive a fs'
                     `S.union` derive a (smartCons (reduceTop phi) (V.tail $ eqVect fs))
             else
-              derive a f1 `setConc` smartCons (reduceBot phi) (V.tail $ eqVect fs)
+              derive a f1
+                `setConc` smartCons (reduceBot phi) (V.tail $ eqVect fs)
                 `S.union` derive a (smartCons (reduceTop phi) (V.tail $ eqVect fs))
 
 derive :: (Ord (Exp a), Eq a) => a -> Exp a -> Set (Exp a)

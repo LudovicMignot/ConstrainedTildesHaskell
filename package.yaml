@@ -33,7 +33,7 @@ dependencies:
 - vector-sized
 - containers
 - singletons
-- singletons-base
+# - singletons-base
 - constraints
 - type-natural
 - graphviz

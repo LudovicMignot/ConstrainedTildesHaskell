@@ -52,7 +52,6 @@ library
     , finite-typelits
     , graphviz
     , singletons
-    , singletons-base
     , text
     , type-natural
     , vector-sized
@@ -77,7 +76,6 @@ executable TildesContraintes-exe
     , finite-typelits
     , graphviz
     , singletons
-    , singletons-base
     , text
     , type-natural
     , vector-sized
@@ -103,7 +101,6 @@ test-suite TildesContraintes-test
     , finite-typelits
     , graphviz
     , singletons
-    , singletons-base
     , text
     , type-natural
     , vector-sized
