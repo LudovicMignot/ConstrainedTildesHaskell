@@ -47,6 +47,15 @@ packages:
 # - git: https://github.com/mniip/singleton-typelits
 #   commit: 617598f09fa02e304b295795521e1a933e4a4eb9
 
+extra-deps:
+  - reflex-0.9.2.0
+  - commutative-semigroups-0.1.0.1
+  - monoidal-containers-0.6.4.0
+  - patch-0.0.8.2
+  - reflex-dom-0.6.3.1
+  # - git: https://github.com/reflex-frp/reflex
+  #   commit: b7d933a33a72949a700414bda7a23aa90105431a
+
 # Override default flag values for local packages and extra-deps
 # flags: {}
 

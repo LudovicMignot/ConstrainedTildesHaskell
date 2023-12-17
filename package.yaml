@@ -38,6 +38,8 @@ dependencies:
 - type-natural
 - graphviz
 - text
+- reflex
+- unordered-containers
 
 ghc-options:
 - -Wall
