@@ -55,7 +55,6 @@ library
     , finite-typelits
     , graphviz
     , hashable
-    , jsaddle
     , reflex
     , reflex-dom-core
     , singletons
@@ -84,7 +83,6 @@ executable TildesContraintes-exe
     , finite-typelits
     , graphviz
     , hashable
-    , jsaddle
     , reflex
     , reflex-dom-core
     , singletons
@@ -114,7 +112,6 @@ test-suite TildesContraintes-test
     , finite-typelits
     , graphviz
     , hashable
-    , jsaddle
     , reflex
     , reflex-dom-core
     , singletons

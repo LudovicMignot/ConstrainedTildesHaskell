@@ -33,12 +33,47 @@ packages:
   original:
     hackage: patch-0.0.8.2
 - completed:
-    hackage: reflex-dom-0.6.3.1@sha256:cd038890b6a1cde5aca996bf5dedae42b5e9f6df3126358c33506e1d40cc10a1,6453
+    hackage: reflex-dom-core-0.8.1.0@sha256:dc27d45db1ef6b033aee52ef7c170d0fc1e31df2f821b7d0029ef53f46be0c6a,7887
     pantry-tree:
-      sha256: dc9be1d01bdbbb9191f2d4a79e14e280eab9b000d8f2f6169e78c56d56ca5bce
-      size: 883
+      sha256: 5d67e869a2a361abef8d153494895dbfe1648584eb70f9cdeb364fd9f4b1c441
+      size: 2734
   original:
-    hackage: reflex-dom-0.6.3.1
+    hackage: reflex-dom-core-0.8.1.0
+- completed:
+    hackage: jsaddle-0.9.8.3@sha256:398978060a258742a62174e57240f6063b71ede36723e40fefd0c63ba03e5bd8,4438
+    pantry-tree:
+      sha256: 50a46838fa9aaf84dec1e4afade7bb6e05d5f3972a9bf8e4b79171f6b54b4068
+      size: 4330
+  original:
+    hackage: jsaddle-0.9.8.3
+- completed:
+    hackage: ghcjs-dom-0.9.5.0@sha256:99c51bff259623fdf285120f38d0ac1291d64717d4f77ad107ec6533532cc7e8,32211
+    pantry-tree:
+      sha256: a3b6f4869e6aecf2e09cf0b3f2b83b4b0223711ae7a8aa43842fed6d68b56fc2
+      size: 357
+  original:
+    hackage: ghcjs-dom-0.9.5.0
+- completed:
+    hackage: zenc-0.1.2@sha256:2b32c40a3c11f07f466604526aacad2a535309da11b203334dbf586333c13534,1350
+    pantry-tree:
+      sha256: e33b84b5528779e4d5c0887b88ebdb0290902ba4367ed786dfc366b29d485d81
+      size: 302
+  original:
+    hackage: zenc-0.1.2
+- completed:
+    hackage: ghcjs-dom-jsaddle-0.9.5.0@sha256:7a903b5d8e2b6ef94174def9bf70e3f870ea96c2f68275069d278c6dcdf2f418,39629
+    pantry-tree:
+      sha256: f3a0fdd986bce48a504d3d55af69176ad22483ed06765c0acb81d47ae745cbcb
+      size: 164
+  original:
+    hackage: ghcjs-dom-jsaddle-0.9.5.0
+- completed:
+    hackage: jsaddle-dom-0.9.5.0@sha256:5a60ba628928ccc03c69118e9f2050805e795684a7a63d77bc9737a3ab86322e,75700
+    pantry-tree:
+      sha256: c3a8802418388ab09b5425bb6cbb003286f2a55cedb9c0984ed4d0aca65a0794
+      size: 48295
+  original:
+    hackage: jsaddle-dom-0.9.5.0
 snapshots:
 - completed:
     sha256: 428ec8d5ce932190d3cbe266b9eb3c175cd81e984babf876b64019e2cbe4ea68

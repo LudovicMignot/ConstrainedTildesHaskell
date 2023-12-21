@@ -1,6 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
-module NFA (newNFA, NFA, setFinal, setInitial, isStateIn, addFinalState, makeTrans, faToDot, faToPng) where
+module NFA where
 
 import Data.Foldable
 import Data.GraphViz.Commands
@@ -38,14 +38,14 @@ faToDot auto = "digraph{" ++ statementList ++ "}"
     myToString p = "\"" ++ toHtmlCapString p ++ "\""
     att1 p
       | isInitial auto p =
-          " [shape = octagon, peripheries = 2, style = rounded, style = filled, color = gray35" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
+        " [shape = octagon, peripheries = 2, style = rounded, style = filled, color = gray35" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
       | otherwise =
-          " [shape = box, peripheries = 2, style = rounded" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
+        " [shape = box, peripheries = 2, style = rounded" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
     att2 p
       | isInitial auto p =
-          " [shape = octagon, style = rounded, style = filled, color = gray35" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
+        " [shape = octagon, style = rounded, style = filled, color = gray35" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
       | otherwise =
-          " [shape = box, style = rounded" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
+        " [shape = box, style = rounded" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
 
 faToPng :: (Ord state, ToString state, ToString symbol) => String -> NFA state symbol -> IO FilePath
 faToPng name auto = addExtension (runGraphviz (parseDotGraph $ pack $ faToDot auto :: G.DotGraph String)) Png name
@@ -66,6 +66,9 @@ data NFA state symbol = NFA
   { initial :: Set state,
     stateConfig :: Map state (Config state symbol)
   }
+
+stateList :: NFA state symbol -> [state]
+stateList = Map.keys . stateConfig
 
 finalStateList :: NFA state symbol -> [state]
 finalStateList = Map.keys . Map.filter finality . stateConfig
@@ -130,4 +133,4 @@ instance (Show state, Show symbol, Ord state) => Show (NFA state symbol) where
       trans Config {succs = s}
         | Map.null s = ""
         | otherwise =
-            '[' : Map.foldrWithKey (\x qs accu -> Set.foldr (\q accu' -> show (x, q) ++ accu') accu qs) "]" s
+          '[' : Map.foldrWithKey (\x qs accu -> Set.foldr (\q accu' -> show (x, q) ++ accu') accu qs) "]" s

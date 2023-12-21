@@ -40,6 +40,9 @@ dependencies:
 - text
 - reflex
 - unordered-containers
+- hashable
+- jsaddle
+- reflex-dom-core
 
 ghc-options:
 - -Wall

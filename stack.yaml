@@ -52,7 +52,12 @@ extra-deps:
   - commutative-semigroups-0.1.0.1
   - monoidal-containers-0.6.4.0
   - patch-0.0.8.2
-  - reflex-dom-0.6.3.1
+  - reflex-dom-core-0.8.1.0
+  - jsaddle-0.9.8.3
+  - ghcjs-dom-0.9.5.0
+  - zenc-0.1.2
+  - ghcjs-dom-jsaddle-0.9.5.0
+  - jsaddle-dom-0.9.5.0
   # - git: https://github.com/reflex-frp/reflex
   #   commit: b7d933a33a72949a700414bda7a23aa90105431a
 

@@ -1,4 +1,7 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
@@ -9,35 +12,44 @@ module Web.Widget where
 import Control.Applicative ((<$>))
 import Control.Monad
 import Control.Monad.IO.Class
-import qualified Data.HashMap.Strict as HMap
-import qualified Data.HashSet as Set
+-- import qualified Data.HashMap.Strict as HMap
+
 import Data.Hashable
 import Data.JSString as JS
-import qualified Data.Map as Map
+import Data.Map qualified as Map
+import Data.Map.Strict
 import Data.Maybe
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Text as Te
   ( Text,
     pack,
     unpack,
   )
+import Exp
+import ExpFromString
+import NFA
 import Reflex
-import Reflex.Dom
+import Reflex.Dom.Builder.Class
+import Reflex.Dom.Builder.Class.Events
+import Reflex.Dom.Core
+import Reflex.Dom.Widget.Basic
+import Reflex.Dom.Widget.Input
 import ToString
-import WordAuto.ExpRat.ExpRat as E
-import WordAuto.ExpRat.ExpRatFromString
-import WordAuto.FA.FAClass
 
-foreign import javascript unsafe "var im = Viz( $1 , { format: \"svg\" }); console.log(im); $r = im;"
-  vizSVG :: JSString -> JSString
+-- import Data.HashMap.Strict
 
 diceButton :: (MonadWidget t m) => m (Event t ())
 diceButton = do
   (e, _) <- elAttr' "div" ("class" =: "btn btn-primary mx-1") $ text "⚃"
   return $ () <$ domEvent Click e
 
-data Method = Glu | Fol | Ant | Brzo | Cont
+data Method = Ant -- add | Glu | Brzo | Cont | Fol
 
-lecteurExp :: (MonadWidget t m) => m (Dynamic t (Maybe (ExpRat Char)))
+randomExpr :: Integer -> Set Char -> IO (Maybe (Exp Char))
+randomExpr _ _ = return $ Just Epsilon
+
+lecteurExp :: (MonadWidget t m) => m (Dynamic t (Maybe (Exp Char)))
 lecteurExp = el "form" $
   elAttr "div" ("class" =: "form-group") $ do
     elAttr "label" ("for" =: "inputExp") $ text "Expression"
@@ -58,7 +70,7 @@ lecteurExp = el "form" $
 
           express <- dyn $ expInput "inputExp" <$> d_t
 
-          let eDef = fromString "(a+b)*.a.(a+b)"
+          let eDef = expFromString "(a+b)*.a.(a+b)"
 
           evt <- diceButton
 
@@ -88,29 +100,29 @@ grpBout =
         ]
     )
     $ do
-      (e1, _) <-
-        elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-          text "Glushkov"
+      -- (e1, _) <-
+      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
+      --     text "Glushkov"
       (e2, _) <-
         elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-          text "Follow"
-      (e3, _) <-
-        elAttr' "button" ("class" =: "btn btn-primary mx-1") $
           text "Antimirov"
-      (e4, _) <-
-        elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-          text "Brzozowski"
-      (e5, _) <-
-        elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-          text "C-Continuations"
+      -- (e3, _) <-
+      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
+      --     text "Follow"
+      -- (e4, _) <-
+      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
+      --     text "Brzozowski"
+      -- (e5, _) <-
+      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
+      --     text "C-Continuations"
 
-      let clicks1 = const (Just Glu) <$> domEvent Click e1
-      let clicks2 = const (Just Fol) <$> domEvent Click e2
-      let clicks3 = const (Just Ant) <$> domEvent Click e3
-      let clicks4 = const (Just Brzo) <$> domEvent Click e4
-      let clicks5 = const (Just Cont) <$> domEvent Click e5
+      -- let clicks1 = const (Just Glu) <$> domEvent Click e1
+      let clicks2 = const (Just Ant) <$> domEvent Click e2
+      -- let clicks3 = const (Just Fol) <$> domEvent Click e2
+      -- let clicks4 = const (Just Brzo) <$> domEvent Click e4
+      -- let clicks5 = const (Just Cont) <$> domEvent Click e5
 
-      holdDyn Nothing $ leftmost [clicks1, clicks2, clicks3, clicks4, clicks5]
+      holdDyn Nothing $ leftmost [clicks2] -- old , clicks1, clicks3, clicks4, clicks5]
 
 helpButton :: (MonadWidget t m) => Text -> Text -> m () -> m ()
 helpButton ident title content = do
@@ -148,8 +160,7 @@ helpButton ident title content = do
                     ("data-target", mappend "#" ident)
                   ]
               )
-              $ elDynHtml' "span" $
-                constDyn "&times"
+              $ elDynHtml' "span" $ constDyn "&times"
           elAttr "div" ("class" =: "modal-body") content
           elAttr "div" ("class" =: "modal-footer") $
             elAttr
@@ -166,7 +177,7 @@ expInput ::
   (MonadWidget t m) =>
   Text ->
   Maybe Text ->
-  m (Dynamic t (Maybe (ExpRat Char)))
+  m (Dynamic t (Maybe (Exp Char)))
 expInput ident start = do
   let errorState =
         Map.fromList [("class", "form-control is-invalid"), ("id", ident)]
@@ -182,32 +193,17 @@ expInput ident start = do
             & textInputConfig_attributes
             .~ attrs
 
-      let result = (fromString . Te.unpack) <$> _textInput_value n
+      let result = expFromString . Te.unpack <$> _textInput_value n
           attrs = fmap (maybe errorState (const validState)) result
   return result
 
--- expInput :: (MonadWidget t m) => Text -> m (Dynamic t (Maybe (ExpRat Char)))
--- expInput ident = do
---   let errorState =
---         Map.fromList [("class", "form-control is-invalid"), ("id", ident)]
---       validState =
---         Map.fromList [("class", "form-control is-valid"), ("id", ident)]
---   rec n <-
---         textInput
---         $  def
---         &  textInputConfig_inputType
---         .~ "text"
---         &  textInputConfig_initialValue
---         .~ "a.a.b*.a+b.b.a*.b+a.b.a.b.(a+b)*.a"
---         &  textInputConfig_attributes
---         .~ attrs
---       let result = (fromString . Te.unpack) <$> _textInput_value n
---           attrs  = fmap (maybe errorState (const validState)) result
---   return result
+#ifdef ghcjs_HOST_OS
+
+foreign import javascript unsafe "var im = Viz( $1 , { format: \"svg\" }); console.log(im); $r = im;"
+  vizSVG :: JSString -> JSString
 
 svgAut ::
   ( MonadWidget t m,
-    FA fa,
     ToString symbol,
     ToString state,
     Hashable symbol,
@@ -215,7 +211,7 @@ svgAut ::
     Eq symbol,
     Eq state
   ) =>
-  fa state symbol ->
+  NFA state symbol ->
   m ()
 svgAut auto = do
   _ <-
@@ -229,27 +225,56 @@ svgAut auto = do
                   faToDot auto
   return ()
 
+#else
+
+svgAut ::
+  ( MonadWidget t m
+  ) =>
+  NFA state symbol ->
+  m ()
+svgAut _ = pure ()
+
+#endif
+
+renameViaFun ::
+  (Ord state') =>
+  NFA state symbol ->
+  (state -> state') ->
+  NFA state' symbol
+renameViaFun aut@NFA {initial = i, stateConfig = sc} renaming =
+  aut {initial = i', stateConfig = sc'}
+  where
+    i' = Set.map renaming i
+    sc' = Map.foldrWithKey myFunc2 Map.empty sc
+    myFunc2 p confOfP =
+      Map.insert (renaming p) (rename confOfP)
+    rename conf@Config {succs = s} = conf {succs = s'}
+      where
+        s' = Map.map (Set.map renaming) s
+
+renameViaMap ::
+  (Ord state, Ord state') =>
+  NFA state symbol ->
+  Map state state' ->
+  NFA state' symbol
+renameViaMap aut m = renameViaFun aut (m Map.!)
+
 svgAutWithMap ::
   ( MonadWidget t m,
-    FA fa,
-    ToString symbol,
     ToString state,
-    Hashable symbol,
-    Hashable state,
-    Eq symbol,
-    Eq state
+    Ord state
   ) =>
-  fa state symbol ->
+  NFA state symbol ->
   m ()
 svgAutWithMap auto = do
   let thestates = Prelude.zip (stateList auto) [1 :: Word ..]
-  let themap = HMap.fromList thestates
+  let themap = Map.fromList thestates
   let auto' = renameViaMap auto themap
   svgAut auto'
   let info =
         Prelude.map
           (\(s, i) -> (Te.pack $ show i ++ " = ", Te.pack $ toHtmlString s))
-          $ HMap.toList themap
+          $ Map.toList themap
   el "table" $ tableDraw info
 
 tableDraw :: (MonadWidget t m) => [(Text, Text)] -> m ()
