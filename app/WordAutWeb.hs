@@ -1,9 +1,10 @@
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Web.WordAutWeb where
+module WordAutWeb where
 
 import Control.Applicative ((<$>))
 import Data.Foldable
@@ -18,19 +19,20 @@ import Data.Text as Te
     pack,
   )
 import Exp
+import qualified Language.Javascript.JSaddle.Types
 import NFA
 import Reflex
 import Reflex.Dom.Core
 import ToString
-import Web.Widget
+import Widget
 
 -- import WordAuto.Conversion.Conversion
 -- import WordAuto.ExpRat.ExpRat as E
 -- import WordAuto.FA.DFA
 -- import WordAuto.FA.FAClass
 
--- main :: IO ()
-main = mainWidgetWithHead header body
+mainFun :: Language.Javascript.JSaddle.Types.JSM ()
+mainFun = mainWidgetWithHead header body
 
 header :: (MonadWidget t m) => m ()
 header =
@@ -165,8 +167,8 @@ aux2 meth e =
   where
     (st1, st2) = case meth of
       Ant -> ("Derived Terms", "Derived terms automaton")
-      -- Brzo -> ("Derivatives", "Derivatives automaton")
-      _ -> undefined
+    -- Brzo -> ("Derivatives", "Derivatives automaton")
+    -- _ -> undefined
     (derivs, dotFA) = case meth of
       Ant ->
         let aut = antimirov e
@@ -189,29 +191,30 @@ aux2 meth e =
                       transitionList aut,
               svgAutWithMap aut
             )
-      -- Brzo ->
-      --   let aut = brzozowskiDerAut e
-      --    in ( L.map
-      --           ( \(x, a, p) ->
-      --               ( mconcat
-      --                   [ symbolDeriv,
-      --                     "<sub>",
-      --                     Te.pack $ toHtmlString a,
-      --                     "</sub>(",
-      --                     Te.pack $ toHtmlString x,
-      --                     ") = "
-      --                   ],
-      --                 Te.pack $ toHtmlString p
-      --               )
-      --           )
-      --           $ transitionList aut,
-      --         svgAutWithMap aut
-      --       )
-      _ -> undefined
+    -- Brzo ->
+    --   let aut = brzozowskiDerAut e
+    --    in ( L.map
+    --           ( \(x, a, p) ->
+    --               ( mconcat
+    --                   [ symbolDeriv,
+    --                     "<sub>",
+    --                     Te.pack $ toHtmlString a,
+    --                     "</sub>(",
+    --                     Te.pack $ toHtmlString x,
+    --                     ") = "
+    --                   ],
+    --                 Te.pack $ toHtmlString p
+    --               )
+    --           )
+    --           $ transitionList aut,
+    --         svgAutWithMap aut
+    --       )
+    -- _ -> undefined
     (title, symbolDeriv) = case meth of
       Ant -> ("Antimirov construction", "δ" :: Text)
-      -- Brzo -> ("Brzozowski construction", "D")
-      _ -> undefined
+
+-- Brzo -> ("Brzozowski construction", "D")
+-- _ -> undefined
 
 -- aux :: (MonadWidget t m) => Method -> Exp Char -> m ()
 -- aux meth e =

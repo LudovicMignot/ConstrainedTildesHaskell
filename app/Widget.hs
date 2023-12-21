@@ -7,7 +7,7 @@
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Web.Widget where
+module Widget where
 
 import Control.Applicative ((<$>))
 import Control.Monad

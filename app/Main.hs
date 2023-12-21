@@ -1,6 +1,16 @@
+{-# LANGUAGE CPP #-}
+
 module Main (main) where
 
-import Lib
+import WordAutWeb
+
+#ifdef ghcjs_HOST_OS
+main :: IO ()
+main = mainFun
+
+#else
 
 main :: IO ()
-main = someFunc
+main = return ()
+
+#endif

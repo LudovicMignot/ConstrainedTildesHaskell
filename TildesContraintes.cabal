@@ -36,9 +36,6 @@ library
       NFA
       Test
       ToString
-      Web.ToString
-      Web.Widget
-      Web.WordAutWeb
   other-modules:
       Paths_TildesContraintes
   hs-source-dirs:
@@ -68,6 +65,8 @@ library
 executable TildesContraintes-exe
   main-is: Main.hs
   other-modules:
+      Widget
+      WordAutWeb
       Paths_TildesContraintes
   hs-source-dirs:
       app
