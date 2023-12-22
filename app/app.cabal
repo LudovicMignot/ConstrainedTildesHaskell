@@ -53,7 +53,7 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
-executable frontend
+executable app
     -- Import common warning flags.
     import:           warnings
 
@@ -61,7 +61,9 @@ executable frontend
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    other-modules:
+      Widget
+      WordAutWeb
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -71,23 +73,19 @@ executable frontend
 	   happy
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.14.3.0
-               , src
-               , reflex-dom
-			   , array
-			   , base >=4.7 && <5
-			   , constraints
-			   , containers
-			   , finite-typelits
-			   , graphviz
-			   , singletons
-			   , singletons-base
-			   , text
-			   , type-natural
-			   , vector-sized
+    build-depends:
+      src
+      , reflex-dom-core
+      , array
+      , base
+      , constraints
+      , containers
+      , finite-typelits
+      , singletons
+      , reflex
 
     -- Directories containing source files.
-    hs-source-dirs:   app
+    hs-source-dirs:   .
 
     -- Base language which the package is written in.
     default-language: Haskell2010
