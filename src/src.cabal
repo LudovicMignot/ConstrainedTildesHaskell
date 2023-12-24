@@ -84,14 +84,18 @@ library
     build-depends:    
       array
       , base
-      , constraints
+      -- , constraints
       , containers
       , finite-typelits
-      , graphviz >= 1.2.4.1 && <= 1.2.4.1
-      , singletons
-      , text >= 2099.20.1.0
-      , type-natural
+      , singletons 
+      , text >= 1.2.4.1 && <= 1.2.4.1
+      -- , type-natural
       , vector-sized
+      -- , jsaddle
+      -- , ghcjs-dom
+      -- , zenc
+      -- , ghcjs-dom-jsaddle
+      -- , jsaddle-dom
 
     -- Directories containing source files.
     hs-source-dirs:   .

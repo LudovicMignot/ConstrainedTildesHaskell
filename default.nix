@@ -9,7 +9,9 @@
     ghcjs = ["src" "frontend" ];
   };
 
-  overrides = self: super: {
-    graphviz = self.callHackage "graphviz" "2099.20.1.0" {};
-  };
+       overrides = self: super: {
+         singletons = self.callHackage "singletons" "2.7" {};     
+         th-desugar = self.callHackage "th-desugar" "1.11" {};         
+       };
+
 })
