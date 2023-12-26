@@ -6,6 +6,7 @@
   };
 
   shells = {
+    ghc = ["src" "frontend"];
     ghcjs = ["src" "frontend" ];
   };
 

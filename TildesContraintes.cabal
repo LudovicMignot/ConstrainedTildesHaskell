@@ -49,10 +49,12 @@ library
     , base >=4.7 && <5
     , constraints
     , containers
+    , directory
     , finite-typelits
     , graphviz
     , hashable
     , jsaddle
+    , jsaddle-warp
     , reflex
     , reflex-dom-core
     , singletons
@@ -80,10 +82,12 @@ executable TildesContraintes-exe
     , base >=4.7 && <5
     , constraints
     , containers
+    , directory
     , finite-typelits
     , graphviz
     , hashable
     , jsaddle
+    , jsaddle-warp
     , reflex
     , reflex-dom-core
     , singletons
@@ -110,10 +114,12 @@ test-suite TildesContraintes-test
     , base >=4.7 && <5
     , constraints
     , containers
+    , directory
     , finite-typelits
     , graphviz
     , hashable
     , jsaddle
+    , jsaddle-warp
     , reflex
     , reflex-dom-core
     , singletons

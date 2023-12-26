@@ -43,6 +43,8 @@ dependencies:
 - hashable
 - jsaddle
 - reflex-dom-core
+- jsaddle-warp
+- directory
 
 ghc-options:
 - -Wall

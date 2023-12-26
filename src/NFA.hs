@@ -47,8 +47,11 @@ faToDot auto = "digraph{" ++ statementList ++ "}"
       | otherwise =
         " [shape = box, style = rounded" ++ ", label=<" ++ toHtmlString p ++ ">];\n"
 
-faToPng :: (Ord state, ToString state, ToString symbol) => String -> NFA state symbol -> IO FilePath
+faToPng :: (Ord state, ToString state, ToString symbol) => FilePath -> NFA state symbol -> IO FilePath
 faToPng name auto = addExtension (runGraphviz (parseDotGraph $ pack $ faToDot auto :: G.DotGraph String)) Png name
+
+faToSVG :: (Ord state, ToString state, ToString symbol) => FilePath -> NFA state symbol -> IO FilePath
+faToSVG name auto = addExtension (runGraphviz (parseDotGraph $ pack $ faToDot auto :: G.DotGraph String)) Svg name
 
 newEmptyConfig :: Config state symbol
 newEmptyConfig = Config {succs = Map.empty, finality = False}

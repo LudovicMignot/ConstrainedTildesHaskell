@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Language.Javascript.JSaddle.Warp
 import WordAutWeb
 
 #ifdef ghcjs_HOST_OS
@@ -11,6 +12,10 @@ main = mainFun
 #else
 
 main :: IO ()
-main = return ()
+main =
+#ifndef ghcjs_HOST_OS
+  run 3911 
+#endif
+    mainFun
 
 #endif

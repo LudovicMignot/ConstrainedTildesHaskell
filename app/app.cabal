@@ -68,21 +68,21 @@ executable app
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     
-    build-tool-depends:
-	   alex
-	   happy
+    -- build-tool-depends:
+	  --  alex
+	  --  happy
 
     -- Other library packages from which modules are imported.
     build-depends:
       src
-      -- , reflex-dom-core
-      -- , array
-      -- , base
-      -- , constraints
-      -- , containers
-      -- , finite-typelits
-      -- , singletons
-      -- , reflex
+      , reflex-dom-core
+      , array
+      , base
+      , constraints
+      , containers
+      , finite-typelits
+      , singletons
+      , reflex
 
     -- Directories containing source files.
     hs-source-dirs:   .

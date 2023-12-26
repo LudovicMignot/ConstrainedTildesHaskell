@@ -35,6 +35,8 @@ import Reflex.Dom.Builder.Class.Events
 import Reflex.Dom.Core
 import Reflex.Dom.Widget.Basic
 import Reflex.Dom.Widget.Input
+import System.Directory
+import System.Directory (makeAbsolute)
 import ToString
 
 -- import Data.HashMap.Strict
@@ -197,10 +199,8 @@ expInput ident start = do
           attrs = fmap (maybe errorState (const validState)) result
   return result
 
-#ifdef ghcjs_HOST_OS
-
-foreign import javascript unsafe "var im = Viz( $1 , { format: \"svg\" }); console.log(im); $r = im;"
-  vizSVG :: JSString -> JSString
+-- foreign import javascript unsafe "var im = Viz( $1 , { format: \"svg\" }); console.log(im); $r = im;"
+--   vizSVG :: JSString -> JSString
 
 svgAut ::
   ( MonadWidget t m,
@@ -209,32 +209,22 @@ svgAut ::
     Hashable symbol,
     Hashable state,
     Eq symbol,
-    Eq state
+    Eq state,
+    Ord state
   ) =>
   NFA state symbol ->
   m ()
 svgAut auto = do
+  path <- liftIO $ makeAbsolute "tmpAuto"
+  tmp <- liftIO $ faToSVG path auto
   _ <-
     el "figure" $
-      elDynHtmlAttr' "td" ("class" =: "text-left pr-3") $
-        constDyn $
-          Te.pack $
-            JS.unpack $
-              vizSVG $
-                JS.pack $
-                  faToDot auto
+      elDynHtmlAttr' "img" ("src" =: Te.pack tmp) ""
+  -- JS.unpack $
+  --   vizSVG $
+  --     JS.pack $
+  -- faToDot auto
   return ()
-
-#else
-
-svgAut ::
-  ( MonadWidget t m
-  ) =>
-  NFA state symbol ->
-  m ()
-svgAut _ = pure ()
-
-#endif
 
 renameViaFun ::
   (Ord state') =>
@@ -262,7 +252,10 @@ renameViaMap aut m = renameViaFun aut (m Map.!)
 svgAutWithMap ::
   ( MonadWidget t m,
     ToString state,
-    Ord state
+    Ord state,
+    Eq symbol,
+    Hashable symbol,
+    ToString symbol
   ) =>
   NFA state symbol ->
   m ()

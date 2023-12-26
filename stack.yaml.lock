@@ -74,6 +74,13 @@ packages:
       size: 48295
   original:
     hackage: jsaddle-dom-0.9.5.0
+- completed:
+    hackage: jsaddle-warp-0.9.8.2@sha256:675dc2a68271daf86848d220c5c562415db1b63e56a6cc6e748e044da5138f0c,2713
+    pantry-tree:
+      sha256: c9121332e47ea5d2b1db1d877711f56a1500357f5bfb73a3b1280ce44e5230aa
+      size: 475
+  original:
+    hackage: jsaddle-warp-0.9.8.2
 snapshots:
 - completed:
     sha256: 428ec8d5ce932190d3cbe266b9eb3c175cd81e984babf876b64019e2cbe4ea68
