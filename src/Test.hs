@@ -7,7 +7,7 @@ import Data.Finite
 import Data.Maybe
 import Data.Set as S
 import Data.Vector.Sized as V
-import Exp
+import Exp hiding (plus)
 import ExpFromString
 import NFA
 
@@ -44,11 +44,11 @@ auto = antimirov expr
 viz :: String
 viz = faToDot auto
 
--- vizPng :: IO FilePath
--- vizPng = faToPng "test" auto
+vizPng :: IO FilePath
+vizPng = faToPng "test" auto
 
 expr2 :: Exp Char
 expr2 = fromJust $ expFromString "|(0&3 Or ¬0 And ~3) * (1 & 2 ∨ Not 1 ∧ ! 2)|(a.a*, b.b*, a.a*, b.b*)"
 
--- vizPng2 :: IO FilePath
--- vizPng2 = faToPng "test2" $ antimirov expr2
+vizPng2 :: IO FilePath
+vizPng2 = faToPng "test2" $ antimirov expr2

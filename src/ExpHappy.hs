@@ -1,23 +1,12 @@
 {-# OPTIONS_GHC -w #-}
--- {-# LANGUAGE RankNTypes      #-}
-
 module ExpHappy where
 
 import Control.Applicative (liftA2)
 import ExpAlex as A
-
 import Exp as E
 import BoolForm as B
-
 import Data.Maybe (listToMaybe)
--- import Text.Read(readMaybe)
--- import Common(ReadVia, readMaybeVia)
-
--- import LinComb.LinComb4
--- import  Singletons.Singletons
 import Control.Monad(join)
-
--- import           Data.Singletons                ( SingI )
 import qualified Data.Array as Happy_Data_Array
 import qualified Data.Bits as Bits
 import Control.Applicative(Applicative(..))

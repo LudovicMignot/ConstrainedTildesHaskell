@@ -6,30 +6,42 @@
 
 module WordAutWeb where
 
-import Control.Applicative ((<$>))
-import Data.Foldable
-import Data.Hashable
-import Data.List as L
+import Control.Monad (void)
+import qualified Data.List as L
 import qualified Data.Map as Map
-import Data.Maybe
-import Data.Set (Set)
+import Data.Maybe (isJust)
 import qualified Data.Set as Set
 import Data.Text as Te
   ( Text,
     pack,
   )
-import Exp
+import Exp (Exp, antimirov)
 import qualified Language.Javascript.JSaddle.Types
-import NFA
-import Reflex
+import NFA (transitionList)
 import Reflex.Dom.Core
-import ToString
+  ( MonadHold (holdDyn),
+    MonadWidget,
+    Reflex (updated),
+    attachPromptlyDyn,
+    blank,
+    constDyn,
+    dyn,
+    el,
+    elAttr,
+    elDynHtml',
+    ffilter,
+    mainWidgetWithHead,
+    text,
+    (=:),
+  )
+import ToString (ToString (toHtmlString))
 import Widget
-
--- import WordAuto.Conversion.Conversion
--- import WordAuto.ExpRat.ExpRat as E
--- import WordAuto.FA.DFA
--- import WordAuto.FA.FAClass
+  ( Method (..),
+    grpBout,
+    lecteurExp,
+    svgAutWithMap,
+    tableDraw,
+  )
 
 mainFun :: Language.Javascript.JSaddle.Types.JSM ()
 mainFun = mainWidgetWithHead header body
@@ -46,19 +58,20 @@ header =
 
 body :: (MonadWidget t m) => m ()
 body = do
-  _ <- elAttr "div" ("class" =: "container") $ do
-    elAttr "h1" ("class" =: "text-center") $ text "Word Automata Constructions"
-    el "hr" $ return ()
-    dynExp <- lecteurExp
-    constructionDyn <- grpBout
-    el "hr" $ return ()
-    info <-
-      holdDyn Nothing $
-        transform
-          <$> ffilter
-            (\(exp_, _) -> isJust exp_)
-            (attachPromptlyDyn dynExp (updated constructionDyn))
-    dyn $ theContent <$> info
+  void $
+    elAttr "div" ("class" =: "container") $ do
+      elAttr "h1" ("class" =: "text-center") $ text "Word Automata Constructions"
+      el "hr" $ return ()
+      dynExp <- lecteurExp
+      constructionDyn <- grpBout
+      el "hr" $ return ()
+      info <-
+        holdDyn Nothing $
+          transform
+            <$> ffilter
+              (\(exp_, _) -> isJust exp_)
+              (attachPromptlyDyn dynExp (updated constructionDyn))
+      dyn $ theContent <$> info
   footer
   where
     transform (Nothing, _) = Nothing
@@ -89,53 +102,6 @@ theContent Nothing = blank
 -------------------------------
 theContent (Just (e, Ant)) = aux2 Ant e
 
------------------------------------
--- theContent (Just (e, Brzo)) = aux2 Brzo e
------------------------------------------
--- theContent (Just (e, Cont)) =
---   elAttr
---     "div"
---     ( Map.fromList
---         [ ( "style",
---             "display : flex; flex-direction : column; flex-wrap : wrap; justify-content : center; align-items : center; align-content : center;"
---           )
---         ]
---     )
---     $ do
---       let aut = ccontAutLin e
---       el "h4" $ text "C-continuations construction"
---       _ <-
---         el "p" $
---           el "h5" $
---             elDynHtml' "span" $
---               constDyn $
---                 mappend "E<sup>#</sup> = " $
---                   Te.pack $
---                     toHtmlString $
---                       linearize e
-
---       listTab
---         [ ("ccont", "C-Continuation computation"),
---           ("ccontAut", "C-Continuation automaton"),
---           ("termAut", "Derived terms automaton via c-continuations")
---         ]
-
---       elAttr "div" ("class" =: "tab-content") $ do
---         oneTab "ccont" True $
---           el "table" $
---             tableDraw $
---               L.map myFunc $
---                 stateList aut
---         oneTab "ccontAut" False $ svgAutWithMap aut
---         oneTab "termAut" False $ svgAutWithMap $ antimirovViaCCont e
---       return ()
---   where
---     myFunc (CStateInit f) = ("c<sub>ε</sub>(E) = ", Te.pack $ toHtmlString f)
---     myFunc (CState p f) =
---       ( mconcat ["c<sub>", Te.pack $ toHtmlString p, "</sub>(E) = "],
---         Te.pack $ toHtmlString f
---       )
-
 aux2 :: (MonadWidget t m) => Method -> Exp Char -> m ()
 aux2 meth e =
   elAttr
@@ -148,7 +114,7 @@ aux2 meth e =
     )
     $ do
       el "h4" $ text title
-      _ <-
+      void $
         el "p" $
           el "h5" $
             elDynHtml' "span" $
@@ -167,8 +133,6 @@ aux2 meth e =
   where
     (st1, st2) = case meth of
       Ant -> ("Derived Terms", "Derived terms automaton")
-    -- Brzo -> ("Derivatives", "Derivatives automaton")
-    -- _ -> undefined
     (derivs, dotFA) = case meth of
       Ant ->
         let aut = antimirov e
@@ -191,30 +155,8 @@ aux2 meth e =
                       transitionList aut,
               svgAutWithMap aut
             )
-    -- Brzo ->
-    --   let aut = brzozowskiDerAut e
-    --    in ( L.map
-    --           ( \(x, a, p) ->
-    --               ( mconcat
-    --                   [ symbolDeriv,
-    --                     "<sub>",
-    --                     Te.pack $ toHtmlString a,
-    --                     "</sub>(",
-    --                     Te.pack $ toHtmlString x,
-    --                     ") = "
-    --                   ],
-    --                 Te.pack $ toHtmlString p
-    --               )
-    --           )
-    --           $ transitionList aut,
-    --         svgAutWithMap aut
-    --       )
-    -- _ -> undefined
     (title, symbolDeriv) = case meth of
       Ant -> ("Antimirov construction", "δ" :: Text)
-
--- Brzo -> ("Brzozowski construction", "D")
--- _ -> undefined
 
 -- aux :: (MonadWidget t m) => Method -> Exp Char -> m ()
 -- aux meth e =
@@ -390,7 +332,7 @@ oneTab ident isActive bloc =
         ]
     )
     $ do
-      _ <-
+      void $
         elAttr
           "div"
           ("class" =: "d-flex flex-column align-items-center")

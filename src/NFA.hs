@@ -1,17 +1,19 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 module NFA where
 
-import Data.Foldable
+import Data.Foldable (Foldable (foldl'))
 import Data.GraphViz.Commands
-import Data.GraphViz.Types
-import Data.GraphViz.Types.Generalised as G
+  ( GraphvizOutput (Png, Svg),
+    addExtension,
+    runGraphviz,
+  )
+import Data.GraphViz.Types (parseDotGraph)
+import Data.GraphViz.Types.Generalised as G (DotGraph)
 import Data.Map.Strict (Map)
-import Data.Map.Strict qualified as Map
+import qualified Data.Map.Strict as Map
 import Data.Set (Set)
-import Data.Set qualified as Set
+import qualified Data.Set as Set
 import Data.Text.Lazy (pack)
-import ToString
+import ToString (ToString (toHtmlCapString, toHtmlString))
 
 data Config state symbol = Config
   { succs :: Map symbol (Set state),

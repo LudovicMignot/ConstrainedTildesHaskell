@@ -33,18 +33,16 @@ dependencies:
 - vector-sized
 - containers
 - singletons
-# - singletons-base
 - constraints
 - type-natural
 - graphviz
 - text
 - reflex
-- unordered-containers
-- hashable
 - jsaddle
 - reflex-dom-core
 - jsaddle-warp
-- directory
+- bytestring
+- QuickCheck
 
 ghc-options:
 - -Wall

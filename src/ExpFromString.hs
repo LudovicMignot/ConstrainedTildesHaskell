@@ -3,7 +3,7 @@
 module ExpFromString where
 
 import Control.Monad (join)
-import Exp
+import Exp (Exp)
 import ExpAlex (alexScanTokens)
 import ExpHappy qualified as H
   ( expfromString,

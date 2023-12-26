@@ -1,19 +1,16 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 module ToString where
 
-import Data.Char (toUpper)
-import Data.Finite
+import qualified Data.ByteString as BS
+import Data.Char (chr, toUpper)
+import Data.Finite (Finite, getFinite)
 import Data.List (intercalate)
 import Data.Set (Set)
-import Data.Set qualified as Set
+import qualified Data.Set as Set
 
 class ToString a where
   toHtmlString :: a -> String
   toHtmlString = toString
 
-  -- pour dot, passer les balises en capitales
-  -- obligatoire ?
   toHtmlCapString :: a -> String
   toHtmlCapString x = change $ toHtmlString x
     where
@@ -28,6 +25,9 @@ class ToString a where
 
   myPrintLn :: a -> IO ()
   myPrintLn x = putStrLn $ toString x
+
+instance ToString BS.ByteString where
+  toString bs = chr . fromEnum <$> BS.unpack bs
 
 instance ToString Bool where
   toString True = "true"

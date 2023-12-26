@@ -3,9 +3,9 @@
 
 module BoolForm where
 
-import Data.Finite
-import GHC.TypeNats
-import ToString
+import Data.Finite (Finite, getFinite, packFinite)
+import GHC.TypeNats (KnownNat)
+import ToString (ToString (toString))
 
 data BoolForm a
   = Atom a
@@ -15,6 +15,19 @@ data BoolForm a
   | Or (BoolForm a) (BoolForm a)
   | Not (BoolForm a)
   deriving (Functor, Foldable, Traversable, Eq, Ord)
+
+smartNeg :: BoolForm a -> BoolForm a
+smartNeg Top = Bot
+smartNeg Bot = Top
+smartNeg (Not f) = f
+smartNeg f = Not f
+
+smartOr :: BoolForm a -> BoolForm a -> BoolForm a
+smartOr Top _ = Top
+smartOr _ Top = Top
+smartOr Bot f = f
+smartOr f Bot = f
+smartOr f g = Or f g
 
 smartAnd :: BoolForm a -> BoolForm a -> BoolForm a
 smartAnd Top f = f

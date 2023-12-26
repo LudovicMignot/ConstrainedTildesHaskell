@@ -1,90 +1,95 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE JavaScriptFFI #-}
 {-# LANGUAGE MonoLocalBinds #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Widget where
 
-import Control.Applicative ((<$>))
-import Control.Monad
-import Control.Monad.IO.Class
--- import qualified Data.HashMap.Strict as HMap
-
-import Data.Hashable
-import Data.JSString as JS
-import Data.Map qualified as Map
-import Data.Map.Strict
-import Data.Maybe
+import ArbitraryExp
+import Control.Monad (join, void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
+import qualified Data.ByteString as BS
+import Data.GraphViz.Commands
+  ( GraphvizCommand (Dot),
+    GraphvizOutput (Svg),
+    graphvizWithHandle,
+  )
+import Data.GraphViz.Types (parseDotGraph)
+import Data.GraphViz.Types.Generalised as G (DotGraph)
+import qualified Data.Map as Map
+import Data.Map.Strict (Map)
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
-import Data.Set qualified as Set
+import qualified Data.Set as Set
 import Data.Text as Te
   ( Text,
     pack,
     unpack,
   )
-import Exp
-import ExpFromString
-import NFA
-import Reflex
-import Reflex.Dom.Builder.Class
-import Reflex.Dom.Builder.Class.Events
+import qualified Data.Text.Lazy as Tel
+import Exp (Exp (Epsilon))
+import ExpFromString (expFromString)
+import NFA (Config (Config, succs), NFA (..), faToDot, stateList)
 import Reflex.Dom.Core
-import Reflex.Dom.Widget.Basic
-import Reflex.Dom.Widget.Input
-import System.Directory
-import System.Directory (makeAbsolute)
-import ToString
-
--- import Data.HashMap.Strict
+  ( EventName (Click),
+    HasDomEvent (domEvent),
+    MonadHold (holdDyn),
+    MonadWidget,
+    PerformEvent (performEvent),
+    Reflex (Dynamic, Event),
+    TextInput (_textInput_value),
+    blank,
+    constDyn,
+    def,
+    dyn,
+    el,
+    elAttr,
+    elAttr',
+    elDynHtml',
+    elDynHtmlAttr',
+    ffor,
+    leftmost,
+    text,
+    textInput,
+    textInputConfig_attributes,
+    textInputConfig_initialValue,
+    textInputConfig_inputType,
+    (&),
+    (.~),
+    (=:),
+  )
+import ToString (ToString (toHtmlString, toString))
 
 diceButton :: (MonadWidget t m) => m (Event t ())
 diceButton = do
   (e, _) <- elAttr' "div" ("class" =: "btn btn-primary mx-1") $ text "⚃"
   return $ () <$ domEvent Click e
 
-data Method = Ant -- add | Glu | Brzo | Cont | Fol
-
-randomExpr :: Integer -> Set Char -> IO (Maybe (Exp Char))
-randomExpr _ _ = return $ Just Epsilon
+data Method = Ant -- add | Glu | Fol
 
 lecteurExp :: (MonadWidget t m) => m (Dynamic t (Maybe (Exp Char)))
 lecteurExp = el "form" $
   elAttr "div" ("class" =: "form-group") $ do
     elAttr "label" ("for" =: "inputExp") $ text "Expression"
-    -- res <- elAttr "div" ("class" =: "input-group") $ do
-    --   expression <- expInput "inputExp"
-    --   --
-    --   helpButton "modal1" "How To" $ do
-    --     el "ul" $ do
-    --       el "li" $ text "Enter a regular expression over the symbols {a,...,z}."
-    --       el "li" $ text "Authorized operators are {+, ., *, 1, 0}."
-    --       el "li" $ text "Then choose a construction method and click the button."
-    --     return ()
-    --   --
-    --   return expression
 
     res <- elAttr "div" ("class" =: "input-group") $ do
       rec d_t <- holdDyn (Just "(a+b)*.a.(a+b)") evt2
-
           express <- dyn $ expInput "inputExp" <$> d_t
-
           let eDef = expFromString "(a+b)*.a.(a+b)"
-
           evt <- diceButton
-
-          let symboles = Set.fromList ['a', 'b', 'c']
-
+          helpButton "modal1" "How To" $ do
+            el "ul" $ do
+              el "li" $ text "Enter a regular expression over the symbols {a,...,z}."
+              el "li" $ text "Authorized operators are {+, ., *, 1, 0}."
+              el "li" $ text "Then choose a construction method and click the button."
+              el "li" $ text "Help: to be continued"
+            return ()
           evt2 <-
             performEvent $
               ffor evt $
                 const $
                   liftIO $
                     fmap (Te.pack . toString)
-                      <$> randomExpr 5 symboles
+                      <$> (Just <$> getAlea 5)
       join <$> holdDyn (constDyn eDef) express
     elAttr "small" ("class" =: "form-text text-muted") $
       text
@@ -111,18 +116,10 @@ grpBout =
       -- (e3, _) <-
       --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
       --     text "Follow"
-      -- (e4, _) <-
-      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-      --     text "Brzozowski"
-      -- (e5, _) <-
-      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-      --     text "C-Continuations"
 
       -- let clicks1 = const (Just Glu) <$> domEvent Click e1
-      let clicks2 = const (Just Ant) <$> domEvent Click e2
+      let clicks2 = Just Ant <$ domEvent Click e2
       -- let clicks3 = const (Just Fol) <$> domEvent Click e2
-      -- let clicks4 = const (Just Brzo) <$> domEvent Click e4
-      -- let clicks5 = const (Just Cont) <$> domEvent Click e5
 
       holdDyn Nothing $ leftmost [clicks2] -- old , clicks1, clicks3, clicks4, clicks5]
 
@@ -199,32 +196,20 @@ expInput ident start = do
           attrs = fmap (maybe errorState (const validState)) result
   return result
 
--- foreign import javascript unsafe "var im = Viz( $1 , { format: \"svg\" }); console.log(im); $r = im;"
---   vizSVG :: JSString -> JSString
-
 svgAut ::
   ( MonadWidget t m,
     ToString symbol,
     ToString state,
-    Hashable symbol,
-    Hashable state,
-    Eq symbol,
-    Eq state,
     Ord state
   ) =>
   NFA state symbol ->
   m ()
 svgAut auto = do
-  path <- liftIO $ makeAbsolute "tmpAuto"
-  tmp <- liftIO $ faToSVG path auto
-  _ <-
-    el "figure" $
-      elDynHtmlAttr' "img" ("src" =: Te.pack tmp) ""
-  -- JS.unpack $
-  --   vizSVG $
-  --     JS.pack $
-  -- faToDot auto
-  return ()
+  let getData handle = do
+        bytes <- BS.hGetContents handle
+        return $ Te.pack $ toString bytes
+  svg <- liftIO $ graphvizWithHandle Dot (parseDotGraph $ Tel.pack $ faToDot auto :: G.DotGraph String) Svg getData
+  void $ elDynHtml' "div" $ return svg
 
 renameViaFun ::
   (Ord state') =>
@@ -253,8 +238,6 @@ svgAutWithMap ::
   ( MonadWidget t m,
     ToString state,
     Ord state,
-    Eq symbol,
-    Hashable symbol,
     ToString symbol
   ) =>
   NFA state symbol ->
@@ -281,6 +264,5 @@ tableDraw ((x1, fols1) : (x2, fols2) : reste) = do
 
 myDraw :: (MonadWidget t m) => Text -> Text -> m ()
 myDraw x fols = do
-  _ <- elDynHtmlAttr' "td" ("class" =: "text-right pl-3") $ constDyn x
-  _ <- elDynHtmlAttr' "td" ("class" =: "text-left pr-3") $ constDyn fols
-  return ()
+  void $ elDynHtmlAttr' "td" ("class" =: "text-right pl-3") $ constDyn x
+  void $ elDynHtmlAttr' "td" ("class" =: "text-left pr-3") $ constDyn fols

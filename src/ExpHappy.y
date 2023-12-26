@@ -1,24 +1,13 @@
 {
 
--- {-# LANGUAGE RankNTypes      #-}
-
 module ExpHappy where
 
 import Control.Applicative (liftA2)
 import ExpAlex as A
-
 import Exp as E
 import BoolForm as B
-
 import Data.Maybe (listToMaybe)
--- import Text.Read(readMaybe)
--- import Common(ReadVia, readMaybeVia)
-
--- import LinComb.LinComb4
--- import  Singletons.Singletons
 import Control.Monad(join)
-
--- import           Data.Singletons                ( SingI )
 
 }
 

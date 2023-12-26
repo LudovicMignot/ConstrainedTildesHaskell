@@ -11,15 +11,15 @@ tokens :-
   "|" {\_ -> Vert}
   "&" | "And" | "∧" {\_ -> And}
   "¬" | "Not" | "~" | "!" {\_ -> Non}
-  "Bot" {\_ -> Bot}
-  "Top" {\_ -> Top}
+  "Bot" | "⊥" {\_ -> Bot}
+  "Top" | "⊤" {\_ -> Top}
   "Or" | "∨" {\_ -> Or}
   "*" {\_ -> Star}
   "+" {\_ -> Somme}
   "."|"·" {\_ -> Conc}
   $symb {\s -> Symb s}
-  "Empty" {\_ -> Vide}
-  "Epsilon" {\_ -> Epsilon}
+  "Empty" | "∅" {\_ -> Vide}
+  "Epsilon" | "ε"  {\_ -> Epsilon}
   "(" {\_ -> ParO}
   ")" {\_ -> ParF}
   "," {\_ -> Virg}

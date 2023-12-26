@@ -9,22 +9,53 @@
 
 module Exp where
 
-import BoolForm hiding (isSingle, paren)
-import Data.Data
-import Data.Finite
-import Data.Foldable as F
+import BoolForm
+  ( BoolForm (Bot, Top),
+    reduce,
+    rename,
+    subst,
+    toFinite,
+  )
+import Data.Data (Proxy (..), type (:~:) (..))
+import Data.Finite (Finite, finite, unshift)
+import Data.Foldable as F (Foldable (foldl'))
 import Data.List (intercalate)
-import Data.Maybe
+import Data.Maybe (fromMaybe)
 import Data.Set as S
-import Data.Singletons
+  ( Set,
+    difference,
+    empty,
+    foldl',
+    foldr,
+    insert,
+    map,
+    null,
+    singleton,
+    union,
+  )
 import Data.Singletons.Decide
+  ( Decision (Disproved, Proved),
+    SDecide ((%~)),
+  )
 import Data.Singletons.TypeLits
-import Data.Type.Equality
-import Data.Vector.Sized as V hiding ((++))
-import GHC.TypeLits hiding (natVal)
+  ( SNat (SNat),
+    Sing,
+    natVal,
+  )
+import Data.Type.Equality (apply, castWith)
+import Data.Vector.Sized as V
+  ( Vector,
+    foldl',
+    head,
+    knownLength,
+    tail,
+    toList,
+    withSizedList,
+  )
+import GHC.TypeLits (KnownNat, Nat, sameNat, type (+))
 import NFA (NFA, addFinalState, isStateIn, makeTrans, newNFA, setFinal, setInitial)
-import ToString
-import Unsafe.Coerce
+import ToString (ToString (toString))
+import Unsafe.Coerce (unsafeCoerce)
 
 -- from https://stackoverflow.com/questions/46634706/haskell-singletons-typelits-package
 
@@ -60,6 +91,11 @@ alphabet (Sum e1 e2) = Exp.alphabet e1 `S.union` Exp.alphabet e2
 alphabet (Concat e1 e2) = Exp.alphabet e1 `S.union` Exp.alphabet e2
 alphabet (Star e) = Exp.alphabet e
 alphabet (ConsTilde _ es) = V.foldl' (\acc e -> Exp.alphabet e `S.union` acc) S.empty es
+
+plus :: Exp a -> Exp a -> Exp a
+plus Empty e = e
+plus e Empty = e
+plus e f = Sum e f
 
 conc :: Exp a -> Exp a -> Exp a
 conc Epsilon e = e
@@ -141,7 +177,7 @@ instance (Show a) => Show (Exp a) where
   show (Symbol a) = show a
   show Epsilon = "ε"
   show Empty = "∅"
-  show (Sum e1 e2@(Sum _ _)) = show e1 ++ paren (show e2)
+  show (Sum e1 e2@(Sum _ _)) = show e1 ++ "+" ++ paren (show e2)
   show (Sum e1 e2) = show e1 ++ "+" ++ show e2
   show (Concat e1 e2) = se1 ++ "·" ++ se2
     where
@@ -156,13 +192,13 @@ instance (Show a) => Show (Exp a) where
   show (Star e)
     | isSingle e = show e ++ "*"
     | otherwise = paren (show e) ++ "*"
-  show (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ show phi ++ "|" ++ "-[" ++ intercalate "," (fmap show (V.toList es)) ++ "]"
+  show (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ show phi ++ "|" ++ "(" ++ intercalate "," (fmap show (V.toList es)) ++ ")"
 
 instance (ToString a) => ToString (Exp a) where
   toString (Symbol a) = toString a
   toString Epsilon = "ε"
   toString Empty = "∅"
-  toString (Sum e1 e2@(Sum _ _)) = toString e1 ++ paren (toString e2)
+  toString (Sum e1 e2@(Sum _ _)) = toString e1 ++ "+" ++ paren (toString e2)
   toString (Sum e1 e2) = toString e1 ++ "+" ++ toString e2
   toString (Concat e1 e2) = se1 ++ "·" ++ se2
     where
@@ -177,7 +213,7 @@ instance (ToString a) => ToString (Exp a) where
   toString (Star e)
     | isSingle e = toString e ++ "*"
     | otherwise = paren (toString e) ++ "*"
-  toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|[" ++ intercalate "," (fmap toString (V.toList es)) ++ "]"
+  toString (ConsTilde (phi :: BoolForm (Finite n)) es) = "|" ++ toString phi ++ "|(" ++ intercalate "," (fmap toString (V.toList es)) ++ ")"
 
 setConc :: (Ord (Exp a)) => Set (Exp a) -> Exp a -> Set (Exp a)
 setConc _ Empty = S.empty
