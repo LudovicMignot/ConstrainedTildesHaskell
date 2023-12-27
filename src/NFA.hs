@@ -10,6 +10,7 @@ import Data.GraphViz.Types (parseDotGraph)
 import Data.GraphViz.Types.Generalised as G (DotGraph)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text.Lazy (pack)
@@ -72,6 +73,30 @@ data NFA state symbol = NFA
     stateConfig :: Map state (Config state symbol)
   }
 
+succOfBy ::
+  (Ord state, Ord symbol) =>
+  NFA state symbol ->
+  (state, symbol) ->
+  Set state
+succOfBy NFA {stateConfig = sc} (p, x) =
+  fromMaybe Set.empty $ Map.lookup p sc >>= Map.lookup x . succs
+
+sendsStateSet ::
+  (Ord state, Ord symbol) =>
+  (NFA state symbol, [symbol]) ->
+  Set state ->
+  Set state
+(auto, word) `sendsStateSet` ps = foldr myFunc ps word
+  where
+    myFunc x =
+      Set.foldr (\q accu -> Set.union accu $ auto `succOfBy` (q, x)) Set.empty
+
+isFinal :: Eq a => NFA a symbol -> a -> Bool
+isFinal aut p = elem p $ finalStateList aut
+
+recognizes :: (Ord state, Ord symbol) => NFA state symbol -> [symbol] -> Bool
+aut `recognizes` w = any (isFinal aut) $ (aut, w) `sendsStateSet` initial aut
+
 stateList :: NFA state symbol -> [state]
 stateList = Map.keys . stateConfig
 
@@ -122,6 +147,19 @@ aut@NFA {stateConfig = sc, initial = is} `setInitial` p =
 
 newNFA :: NFA state symbol
 newNFA = NFA {initial = Set.empty, stateConfig = Map.empty}
+
+fromLists ::
+  (Ord state, Ord symbol) =>
+  [state] ->
+  [(state, symbol, state)] ->
+  [state] ->
+  NFA state symbol
+fromLists initialList transList finalList = res
+  where
+    a1 = newNFA
+    a2 = foldr (flip makeTrans) a1 transList
+    a3 = foldr (flip setFinal) a2 finalList
+    res = foldr (flip setInitial) a3 initialList
 
 instance (Show state, Show symbol, Ord state) => Show (NFA state symbol) where
   show aut@NFA {initial = i} =

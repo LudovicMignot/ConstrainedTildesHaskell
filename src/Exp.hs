@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
@@ -76,6 +78,8 @@ data Exp a where
   Concat :: Exp a -> Exp a -> Exp a
   Star :: Exp a -> Exp a
   ConsTilde :: BoolForm (Finite n) -> Vector n (Exp a) -> Exp a
+
+deriving instance Functor Exp
 
 consTilde :: BoolForm Integer -> [Exp a] -> Maybe (Exp a)
 consTilde f (es :: [Exp a]) = V.withSizedList es aux

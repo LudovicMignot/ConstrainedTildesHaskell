@@ -10,6 +10,7 @@ import Data.Vector.Sized as V
 import Exp hiding (plus)
 import ExpFromString
 import NFA
+import Positions
 
 phi :: BoolForm (Finite 3)
 phi = And (Or (Atom (finite 2)) (Atom (finite 0))) (Not (Atom (finite 1)))
@@ -52,3 +53,17 @@ expr2 = fromJust $ expFromString "|(0&3 Or ¬0 And ~3) * (1 & 2 ∨ Not 1 ∧ ! 
 
 vizPng2 :: IO FilePath
 vizPng2 = faToPng "test2" $ antimirov expr2
+
+exprLin :: Exp (Pos Char)
+exprLin = linearize expr
+
+testDev :: Exp (Pos Char) -> Exp (Pos Char)
+testDev h = case h of
+  ConsTilde bf vec -> devSat bf vec
+  _ -> error "testDev: not a tilde"
+
+exprTest :: Exp Char
+exprTest = fromJust $ expFromString "|⊤|(d,b)"
+
+testBool :: [[Finite 2]]
+testBool = antiAllSat (Top :: BoolForm (Finite 2))

@@ -4,6 +4,9 @@
 module BoolForm where
 
 import Data.Finite (Finite, getFinite, packFinite)
+import Data.List (subsequences)
+import Data.Set (Set)
+import qualified Data.Set as Set
 import GHC.TypeNats (KnownNat)
 import ToString (ToString (toString))
 
@@ -15,6 +18,25 @@ data BoolForm a
   | Or (BoolForm a) (BoolForm a)
   | Not (BoolForm a)
   deriving (Functor, Foldable, Traversable, Eq, Ord)
+
+antiEval :: Eq a => [a] -> BoolForm a -> Bool
+antiEval as (Atom a) = a `notElem` as
+antiEval _ Bot = False
+antiEval _ Top = True
+antiEval as (And f1 f2) = antiEval as f1 && antiEval as f2
+antiEval as (Or f1 f2) = antiEval as f1 || antiEval as f2
+antiEval as (Not f) = not $ antiEval as f
+
+atoms :: Ord a => BoolForm a -> Set a
+atoms (Atom a) = Set.singleton a
+atoms Bot = Set.empty
+atoms Top = Set.empty
+atoms (And f1 f2) = atoms f1 `Set.union` atoms f2
+atoms (Or f1 f2) = atoms f1 `Set.union` atoms f2
+atoms (Not f) = atoms f
+
+antiAllSat :: KnownNat n => BoolForm (Finite n) -> [[Finite n]]
+antiAllSat f = filter (`antiEval` f) $ subsequences [0 ..]
 
 smartNeg :: BoolForm a -> BoolForm a
 smartNeg Top = Bot

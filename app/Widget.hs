@@ -64,7 +64,7 @@ diceButton = do
   (e, _) <- elAttr' "div" ("class" =: "btn btn-primary mx-1") $ text "⚃"
   return $ () <$ domEvent Click e
 
-data Method = Ant -- add | Glu | Fol
+data Method = Ant | Glu -- add  | Fol
 
 lecteurExp :: (MonadWidget t m) => m (Dynamic t (Maybe (Exp Char)))
 lecteurExp = el "form" $
@@ -107,9 +107,9 @@ grpBout =
         ]
     )
     $ do
-      -- (e1, _) <-
-      --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
-      --     text "Glushkov"
+      (e1, _) <-
+        elAttr' "button" ("class" =: "btn btn-primary mx-1") $
+          text "Glushkov"
       (e2, _) <-
         elAttr' "button" ("class" =: "btn btn-primary mx-1") $
           text "Antimirov"
@@ -117,11 +117,11 @@ grpBout =
       --   elAttr' "button" ("class" =: "btn btn-primary mx-1") $
       --     text "Follow"
 
-      -- let clicks1 = const (Just Glu) <$> domEvent Click e1
+      let clicks1 = Just Glu <$ domEvent Click e1
       let clicks2 = Just Ant <$ domEvent Click e2
       -- let clicks3 = const (Just Fol) <$> domEvent Click e2
 
-      holdDyn Nothing $ leftmost [clicks2] -- old , clicks1, clicks3, clicks4, clicks5]
+      holdDyn Nothing $ leftmost [clicks1, clicks2] -- old clicks3, clicks4, clicks5]
 
 helpButton :: (MonadWidget t m) => Text -> Text -> m () -> m ()
 helpButton ident title content = do

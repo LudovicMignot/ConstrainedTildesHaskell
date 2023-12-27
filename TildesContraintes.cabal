@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -34,6 +34,7 @@ library
       ExpFromString
       ExpHappy
       NFA
+      Positions
       Test
       ToString
   other-modules:
@@ -53,8 +54,10 @@ library
     , containers
     , finite-typelits
     , graphviz
+    , hspec
     , jsaddle
     , jsaddle-warp
+    , mtl
     , reflex
     , reflex-dom-core
     , singletons
@@ -85,8 +88,10 @@ executable TildesContraintes-exe
     , containers
     , finite-typelits
     , graphviz
+    , hspec
     , jsaddle
     , jsaddle-warp
+    , mtl
     , reflex
     , reflex-dom-core
     , singletons
@@ -116,8 +121,10 @@ test-suite TildesContraintes-test
     , containers
     , finite-typelits
     , graphviz
+    , hspec
     , jsaddle
     , jsaddle-warp
+    , mtl
     , reflex
     , reflex-dom-core
     , singletons

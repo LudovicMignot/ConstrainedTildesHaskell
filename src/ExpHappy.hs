@@ -498,8 +498,8 @@ happyNewToken action sts stk (tk:tks) =
 	A.Epsilon -> cont 18;
 	A.ParO -> cont 19;
 	A.ParF -> cont 20;
-	A.Top -> cont 21;
-	A.Bot -> cont 22;
+	A.Bot -> cont 21;
+	A.Top -> cont 22;
 	A.Vert -> cont 23;
 	_ -> happyError' ((tk:tks), [])
 	}

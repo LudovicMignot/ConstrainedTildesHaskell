@@ -38,8 +38,8 @@ import Control.Monad(join)
   eps {A.Epsilon}
   po {A.ParO}
   pf {A.ParF}
-  bot {A.Top}
-  top {A.Bot}
+  bot {A.Bot}
+  top {A.Top}
   vert {A.Vert}
 
 %%
