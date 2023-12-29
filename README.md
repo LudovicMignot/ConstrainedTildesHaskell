@@ -12,6 +12,14 @@ The easiest way to install the Haskell tool chain is to use [`ghcup`](https://ww
 ## PNG Generation
 The computed automata can be converted to PNG format using [`graphviz`](https://graphviz.org/download/).
 
+## Web Interface Launch
+First, run the `stack build` command in order to build the executable.
+
+Then, launch the server with the command `stack exec TildesContraintes-exe`.
+
+Finally, open a web browser (preferably `Chrome`, there may be problems with `Firefox`)
+and go to `http://localhost:3911/`.
+
 ## Computation of the Partial Derivatives
 First, run the `stack ghci Test.hs` command in the `src` folder.
 This may take some time during the first launch: Haskell packages have to be downloaded and built.
