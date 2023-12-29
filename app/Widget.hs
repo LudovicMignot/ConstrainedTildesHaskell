@@ -78,10 +78,12 @@ lecteurExp = el "form" $
           evt <- diceButton
           helpButton "modal1" "How To" $ do
             el "ul" $ do
-              el "li" $ text "Enter a regular expression over the symbols {a,...,z}."
-              el "li" $ text "Authorized operators are {+, ., *, 1, 0}."
+              el "li" $ text "Enter an extended expression over the symbols {a,...,z}."
+              el "li" $ text "Authorized Boolean operators are {∧, ¬, ∨, ⊥, ⊤}."
+              el "li" $ text "Authorized Boolean atoms are {0, 1, ...}."
+              el "li" $ text "Authorized expression operators are {+, ., *, ε, ∅}."
+              el "li" $ text "Boolean formulae for tildes must be enclosed in \"|\" "
               el "li" $ text "Then choose a construction method and click the button."
-              el "li" $ text "Help: to be continued"
             return ()
           evt2 <-
             performEvent $
@@ -93,7 +95,7 @@ lecteurExp = el "form" $
       join <$> holdDyn (constDyn eDef) express
     elAttr "small" ("class" =: "form-text text-muted") $
       text
-        "Enter a regular expression, made of the symbols in {a,..., z, +, ., *, 0, 1}."
+        "Enter an extended expression."
     return res
 
 grpBout :: (MonadWidget t m) => m (Dynamic t (Maybe Method))
